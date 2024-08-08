@@ -1,8 +1,8 @@
 package com.example.prolockloggerv1;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -25,16 +25,13 @@ public class LandingActivity extends AppCompatActivity {
         // Initialize GoogleSignInClient
         mGoogleSignInClient = GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN);
 
-        // Get the user name from the intent
-        String userName = getIntent().getStringExtra("userName");
+        // Retrieve user details from SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+        String userName = sharedPreferences.getString("user_name", "Guest");
 
         // Display the user name
         TextView userNameTextView = findViewById(R.id.user_name);
-        if (userName != null) {
-            userNameTextView.setText("Welcome, " + userName);
-        } else {
-            userNameTextView.setText("Welcome, Guest");
-        }
+        userNameTextView.setText("Welcome, " + userName);
 
         // Set up the sign-out button
         Button signOutButton = findViewById(R.id.sign_out_button);
@@ -44,6 +41,12 @@ public class LandingActivity extends AppCompatActivity {
     private void signOut() {
         mGoogleSignInClient.signOut()
                 .addOnCompleteListener(this, task -> {
+                    // Clear session data
+                    SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.clear();
+                    editor.apply();
+
                     // After sign-out, return to MainActivity
                     Intent intent = new Intent(LandingActivity.this, MainActivity.class);
                     startActivity(intent);

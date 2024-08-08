@@ -1,6 +1,7 @@
 package com.example.prolockloggerv1;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -33,6 +34,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Check if user session exists
+        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+        if (sharedPreferences.contains("user_email")) {
+            // User is already logged in, redirect to LandingActivity
+            Intent intent = new Intent(MainActivity.this, LandingActivity.class);
+            startActivity(intent);
+            finish();
+        }
 
         // Configure Google Sign-In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -125,22 +135,27 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Log.d("Account Creation response!", response.toString());
-//                    Account is created
                     Toast.makeText(MainActivity.this, "Welcome", Toast.LENGTH_SHORT).show();
 
-//                    TODO: Redirect to another page
+                    // Save user details in SharedPreferences
+                    SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("user_name", account.getName());
+                    editor.putString("user_email", account.getEmail());
+                    editor.putString("user_google_id", account.getGoogleId());
+                    editor.apply();
+
+                    // Redirect to another page
                     Intent intent = new Intent(MainActivity.this, LandingActivity.class);
                     startActivity(intent);
-
+                    finish();
                 }
-
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-//                There was an error
-//                TODO: Handle error
                 Log.d("Account Error", t.getMessage());
+                // Handle error
             }
         });
     }
