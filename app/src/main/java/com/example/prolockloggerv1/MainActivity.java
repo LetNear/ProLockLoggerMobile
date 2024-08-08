@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-                    Log.d("Account Creation response", response.toString());
+                    Log.d("Account Creation response!", response.toString());
 //                    Account is created
                     Toast.makeText(MainActivity.this, "Welcome", Toast.LENGTH_SHORT).show();
 
