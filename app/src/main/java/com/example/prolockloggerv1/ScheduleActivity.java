@@ -1,6 +1,9 @@
 package com.example.prolockloggerv1;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,16 +23,15 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import android.os.Handler;
 
 public class ScheduleActivity extends AppCompatActivity {
 
     private TableLayout tableLayout;
     private Button nextPageButton, previousPageButton;
-    private TextView pageIndicator;
+    private TextView pageIndicator, userNameTextView;
     private List<Schedule> allSchedules;  // Store all the schedules
     private int currentPage = 0;
-    private int pageSize = 10; // Number of rows per page
+    private int pageSize = 15; // Number of rows per page
 
     private static final int REFRESH_INTERVAL_MS = 5000; // 5 seconds
     private Handler handler = new Handler();
@@ -37,7 +39,20 @@ public class ScheduleActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
         setContentView(R.layout.activity_schedule);
+
+        // Retrieve user details from SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+        String userName = sharedPreferences.getString("user_name", "Guest");
+
+        // Display the user name
+        userNameTextView = findViewById(R.id.user_name);
+        userNameTextView.setText("Welcome, " + userName);
 
         tableLayout = findViewById(R.id.tableLayout);
         nextPageButton = findViewById(R.id.nextPageButton);
