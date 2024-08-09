@@ -54,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
         findViewById(R.id.sign_in_button).setOnClickListener(view -> signIn());
+
+
     }
 
     private void signIn() {

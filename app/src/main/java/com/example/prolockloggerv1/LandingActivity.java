@@ -36,6 +36,8 @@ public class LandingActivity extends AppCompatActivity {
         // Set up the sign-out button
         Button signOutButton = findViewById(R.id.sign_out_button);
         signOutButton.setOnClickListener(v -> signOut());
+        Button scheduleButton = findViewById(R.id.schedule);
+        scheduleButton.setOnClickListener(v -> schedule());
     }
 
     private void signOut() {
@@ -52,5 +54,10 @@ public class LandingActivity extends AppCompatActivity {
                     startActivity(intent);
                     finish(); // Optional: finish LandingActivity so user cannot return to it with back button
                 });
+    }
+
+    public void schedule() {
+        Intent intent = new Intent(LandingActivity.this, ScheduleActivity.class);
+        startActivity(intent);
     }
 }

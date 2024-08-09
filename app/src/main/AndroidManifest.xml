@@ -24,6 +24,7 @@
         <!-- LandingActivity Declaration -->
         <activity android:name=".LandingActivity"
             android:exported="true" />
+        <activity android:name=".ScheduleActivity"/>
 
     </application>
 
