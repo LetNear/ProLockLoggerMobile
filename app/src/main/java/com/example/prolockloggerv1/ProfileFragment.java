@@ -1,7 +1,5 @@
 package com.example.prolockloggerv1;
 
-import static android.content.Context.MODE_PRIVATE;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,13 +7,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.prolockloggerv1.databinding.FragmentProfileBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -32,48 +29,26 @@ public class ProfileFragment extends Fragment {
     private static final int RC_SIGN_IN = 9001;
     private GoogleSignInClient mGoogleSignInClient;
     private ApiService apiService;
+    FragmentProfileBinding binding;
 
-    public ProfileFragment() {
-        // Required empty public constructor
-    }
-
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
-
-        // Check if user session exists
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("user_session", MODE_PRIVATE);
-        if (sharedPreferences.contains("user_email")) {
-            // User is already logged in, show profile details
-            showProfileDetails(view);
-        } else {
-            // User is not logged in, show sign-in button
-            showSignInButton(view);
-        }
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        binding = FragmentProfileBinding.inflate(inflater, container, false);
 
         // Configure Google Sign-In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
+        mGoogleSignInClient = GoogleSignIn.getClient(getActivity(), gso);
 
         // Initialize Retrofit
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        return view;
-    }
+        // Set up the Google Sign-In button
+        binding.signInButton.setOnClickListener(view -> signIn());
 
-    private void showProfileDetails(View view) {
-        // Inflate your profile details layout here
-        // e.g., TextViews for displaying user details
-        // You can retrieve user details from SharedPreferences and set them to the views
-    }
-
-    private void showSignInButton(View view) {
-        Button signInButton = view.findViewById(R.id.sign_in_button);
-        signInButton.setVisibility(View.VISIBLE);
-        signInButton.setOnClickListener(v -> signIn());
+        return binding.getRoot();
     }
 
     private void signIn() {
@@ -99,55 +74,58 @@ public class ProfileFragment extends Fragment {
             }
         } catch (ApiException e) {
             Log.w("ProfileFragment", "signInResult:failed code=" + e.getStatusCode());
-            Toast.makeText(requireActivity(), "Use a CSPC email account", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), "Use a CSPC email account", Toast.LENGTH_LONG).show();
         }
     }
 
     private void checkAndUpdateAccount(GoogleSignInAccount account) {
         String email = account.getEmail();
+        String name = account.getDisplayName();
+        String googleId = account.getId();
 
-        // Log email
+        // Log email and name
         Log.d("ProfileFragment", "Email: " + email);
+        Log.d("ProfileFragment", "Name: " + name);
 
         String internalDomain = "@my.cspc.edu.ph";
         if (email != null && !email.endsWith(internalDomain)) {
-            Toast.makeText(requireActivity(), "External accounts are not allowed.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), "External accounts are not allowed.", Toast.LENGTH_LONG).show();
             return;
         }
 
         apiService.getAccount(email).enqueue(new Callback<Account>() {
+
             @Override
             public void onResponse(Call<Account> call, Response<Account> response) {
+                Log.d("Get Account Response: ", response.toString());
                 if (response.isSuccessful() && response.body() != null) {
-                    // Account found, log in and redirect
                     Account existingAccount = response.body();
                     loginAndRedirect(existingAccount);
                 } else {
-                    // Account not found, show toast
-                    Toast.makeText(requireActivity(), "Account not found", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "Account not found!, Consult your Instructor", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<Account> call, Throwable t) {
                 Log.d("Account Error", t.getMessage());
-                Toast.makeText(requireActivity(), "An error occurred while fetching account details", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(), "An error occurred while fetching account details", Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void loginAndRedirect(Account account) {
-        // Save user details in SharedPreferences
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("user_session", MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("user_name", account.getName());
         editor.putString("user_email", account.getEmail());
         editor.putString("user_google_id", account.getGoogleId());
         editor.apply();
 
-        // Redirect to LandingActivity
-        Intent intent = new Intent(requireActivity(), LandingActivity.class);
+        // Redirect to MainActivity and pass extra data to show HomeFragment
+        Intent intent = new Intent(getActivity(), MainActivity.class);
+        intent.putExtra("show_home_fragment", true);  // Passing data to show HomeFragment
         startActivity(intent);
-        requireActivity().finish();
+        getActivity().finish();
     }
 }

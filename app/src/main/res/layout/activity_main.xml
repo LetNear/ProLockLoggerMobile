@@ -9,16 +9,12 @@
     android:gravity="center"
     tools:context=".MainActivity">
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/sign_in_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"/>
+
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/frame_layout"/>
+        android:id="@+id/fragment_container"/>
 
     <com.google.android.material.bottomappbar.BottomAppBar
         android:layout_width="match_parent"
