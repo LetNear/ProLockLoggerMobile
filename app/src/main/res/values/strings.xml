@@ -2,4 +2,12 @@
     <string name="app_name">ProLockLoggerV1</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="server_client_id">585572984310-vq8k186sl8n56p24ba1cu4hkgou4qekb.apps.googleusercontent.com</string>
+
+    <string-array name="gender_array">
+        <item>Male</item>
+        <item>Female</item>
+        <item>Other</item>
+    </string-array>
+
 </resources>
