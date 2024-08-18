@@ -1,18 +1,21 @@
 package com.example.prolockloggerv1;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
-import com.example.prolockloggerv1.databinding.ActivityMainBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -24,72 +27,53 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class ProfileFragment extends Fragment {
 
     private static final int RC_SIGN_IN = 9001;
     private GoogleSignInClient mGoogleSignInClient;
     private ApiService apiService;
 
-    ActivityMainBinding binding;
+    public ProfileFragment() {
+        // Required empty public constructor
+    }
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
-        setContentView(binding.getRoot());
-
-        replaceFragment(new HomeFragment());
-        binding.bottomNavigationView.setBackground(null);
-
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-            switch (item.getItemId()) {
-                case R.id.home:
-                    replaceFragment(new HomeFragment());
-                    return true;
-
-                case R.id.shorts:
-                    replaceFragment(new ScheduleFragment());
-                    return true;
-                case R.id.login:
-                    replaceFragment(new ProfileFragment());
-                    return true;
-
-                default:
-                    return false;
-            }
-        });
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         // Check if user session exists
-        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("user_session", MODE_PRIVATE);
         if (sharedPreferences.contains("user_email")) {
-            // User is already logged in, redirect to LandingActivity
-            Intent intent = new Intent(MainActivity.this, LandingActivity.class);
-            startActivity(intent);
-            finish();
-            return; // Return early to prevent further execution
+            // User is already logged in, show profile details
+            showProfileDetails(view);
+        } else {
+            // User is not logged in, show sign-in button
+            showSignInButton(view);
         }
 
         // Configure Google Sign-In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
 
         // Initialize Retrofit
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        findViewById(R.id.sign_in_button).setOnClickListener(view -> signIn());
+        return view;
     }
 
-    private void replaceFragment(Fragment fragment) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, fragment);
-        fragmentTransaction.commit();
+    private void showProfileDetails(View view) {
+        // Inflate your profile details layout here
+        // e.g., TextViews for displaying user details
+        // You can retrieve user details from SharedPreferences and set them to the views
+    }
+
+    private void showSignInButton(View view) {
+        Button signInButton = view.findViewById(R.id.sign_in_button);
+        signInButton.setVisibility(View.VISIBLE);
+        signInButton.setOnClickListener(v -> signIn());
     }
 
     private void signIn() {
@@ -114,54 +98,47 @@ public class MainActivity extends AppCompatActivity {
                 checkAndUpdateAccount(account);
             }
         } catch (ApiException e) {
-            Log.w("MainActivity", "signInResult:failed code=" + e.getStatusCode());
-            Toast.makeText(MainActivity.this, "Use a CSPC email account", Toast.LENGTH_LONG).show();
-            // Optional: You can also clear the Google sign-in client state if needed.
+            Log.w("ProfileFragment", "signInResult:failed code=" + e.getStatusCode());
+            Toast.makeText(requireActivity(), "Use a CSPC email account", Toast.LENGTH_LONG).show();
         }
     }
 
     private void checkAndUpdateAccount(GoogleSignInAccount account) {
         String email = account.getEmail();
-        String name = account.getDisplayName();
-        String googleId = account.getId();
 
-        // Log email and name
-        Log.d("MainActivity", "Email: " + email);
-        Log.d("MainActivity", "Name: " + name);
+        // Log email
+        Log.d("ProfileFragment", "Email: " + email);
 
         String internalDomain = "@my.cspc.edu.ph";
         if (email != null && !email.endsWith(internalDomain)) {
-            Toast.makeText(MainActivity.this, "External accounts are not allowed.", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireActivity(), "External accounts are not allowed.", Toast.LENGTH_LONG).show();
             return;
         }
 
         apiService.getAccount(email).enqueue(new Callback<Account>() {
-
             @Override
             public void onResponse(Call<Account> call, Response<Account> response) {
-                Log.d("Get Account Response: ", response.toString());
                 if (response.isSuccessful() && response.body() != null) {
                     // Account found, log in and redirect
                     Account existingAccount = response.body();
                     loginAndRedirect(existingAccount);
                 } else {
                     // Account not found, show toast
-                    Toast.makeText(MainActivity.this, "Account not found", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireActivity(), "Account not found", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<Account> call, Throwable t) {
                 Log.d("Account Error", t.getMessage());
-                // Handle error
-                Toast.makeText(MainActivity.this, "An error occurred while fetching account details", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireActivity(), "An error occurred while fetching account details", Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void loginAndRedirect(Account account) {
         // Save user details in SharedPreferences
-        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("user_session", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("user_name", account.getName());
         editor.putString("user_email", account.getEmail());
@@ -169,8 +146,8 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
 
         // Redirect to LandingActivity
-        Intent intent = new Intent(MainActivity.this, LandingActivity.class);
+        Intent intent = new Intent(requireActivity(), LandingActivity.class);
         startActivity(intent);
-        finish();
+        requireActivity().finish();
     }
 }

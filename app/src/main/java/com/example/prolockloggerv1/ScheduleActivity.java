@@ -27,7 +27,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ScheduleActivity extends AppCompatActivity {
 
     private TableLayout tableLayout;
-    private Button nextPageButton, previousPageButton;
+    private Button nextPageButton, previousPageButton, backButton;
     private TextView pageIndicator, userNameTextView;
     private List<Schedule> allSchedules;  // Store all the schedules
     private int currentPage = 0;
@@ -58,6 +58,7 @@ public class ScheduleActivity extends AppCompatActivity {
         nextPageButton = findViewById(R.id.nextPageButton);
         previousPageButton = findViewById(R.id.previousPageButton);
         pageIndicator = findViewById(R.id.pageIndicator);
+        backButton = findViewById(R.id.backButton); // Initialize the Back button
 
         allSchedules = new ArrayList<>();
 
@@ -79,6 +80,14 @@ public class ScheduleActivity extends AppCompatActivity {
                 displayPage(currentPage);
             }
         });
+
+        // Set up back button click listener
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed(); // Handle back navigation
+            }
+        });
     }
 
     @Override
@@ -87,7 +96,6 @@ public class ScheduleActivity extends AppCompatActivity {
         // Stop the periodic refresh when the activity is destroyed
         handler.removeCallbacks(refreshRunnable);
     }
-
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
@@ -98,7 +106,7 @@ public class ScheduleActivity extends AppCompatActivity {
 
     private void loadSchedules() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.1.8:8000/api/")
+                .baseUrl("https://prolocklogger.pro/api/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -130,78 +138,106 @@ public class ScheduleActivity extends AppCompatActivity {
         // Clear existing rows (except the header)
         tableLayout.removeViews(1, tableLayout.getChildCount() - 1);
 
-        int start = page * pageSize;
-        int end = Math.min(start + pageSize, allSchedules.size());
-
-        for (int i = start; i < end; i++) {
-            Schedule schedule = allSchedules.get(i);
-
+        if (allSchedules.isEmpty()) {
+            // If there are no schedules, display a message indicating no schedules
             TableRow row = new TableRow(this);
             row.setLayoutParams(new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
                     TableRow.LayoutParams.WRAP_CONTENT
             ));
 
-            // Create and add the Schedule Id TextView
-            TextView id = new TextView(this);
-            id.setText(String.valueOf(schedule.getId()));
-            id.setPadding(8, 8, 8, 8);
-            id.setGravity(android.view.Gravity.CENTER);
-            id.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-            row.addView(id);
-
-            // Create and add the Course TextView
-            TextView course = new TextView(this);
-            course.setText(schedule.getSubjectName());
-            course.setPadding(8, 8, 8, 8);
-            course.setGravity(android.view.Gravity.CENTER);
-            course.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-            row.addView(course);
-
-            // Create and add the Time and Day TextView
-            TextView timeAndDay = new TextView(this);
-            timeAndDay.setText(schedule.getDayOfTheWeek() + " " + schedule.getClassStart() + " - " + schedule.getClassEnd());
-            timeAndDay.setPadding(8, 8, 8, 8);
-            timeAndDay.setGravity(android.view.Gravity.CENTER);
-            timeAndDay.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-            row.addView(timeAndDay);
-
-            // Create and add the Block TextView
-            TextView block = new TextView(this);
-            block.setText(String.valueOf(schedule.getBlockId()));
-            block.setPadding(8, 8, 8, 8);
-            block.setGravity(android.view.Gravity.CENTER);
-            block.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-            row.addView(block);
-
-            // Add the row to the table layout
-            tableLayout.addView(row);
-        }
-
-        // Calculate remaining rows needed to fill the space
-        int remainingRows = pageSize - (end - start);
-
-        // Add filler rows to take up remaining space
-        for (int i = 0; i < remainingRows; i++) {
-            TableRow fillerRow = new TableRow(this);
-            fillerRow.setLayoutParams(new TableRow.LayoutParams(
+            TextView noDataTextView = new TextView(this);
+            noDataTextView.setText("No schedules yet!");
+            noDataTextView.setPadding(8, 8, 8, 8);
+            noDataTextView.setGravity(android.view.Gravity.CENTER);
+            noDataTextView.setLayoutParams(new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
-                    0, 1f // Set the weight to 1 to evenly distribute space
+                    TableRow.LayoutParams.WRAP_CONTENT
             ));
 
-            // Add empty or invisible TextViews to the filler row
-            TextView emptyView = new TextView(this);
-            emptyView.setText("");
-            fillerRow.addView(emptyView);
+            row.addView(noDataTextView);
+            tableLayout.addView(row);
 
-            tableLayout.addView(fillerRow);
+            // Disable page navigation buttons since there's no data
+            previousPageButton.setEnabled(false);
+            nextPageButton.setEnabled(false);
+
+            // Update the page indicator
+            pageIndicator.setText("Page 1");
+        } else {
+            int start = page * pageSize;
+            int end = Math.min(start + pageSize, allSchedules.size());
+
+            for (int i = start; i < end; i++) {
+                Schedule schedule = allSchedules.get(i);
+
+                TableRow row = new TableRow(this);
+                row.setLayoutParams(new TableRow.LayoutParams(
+                        TableRow.LayoutParams.MATCH_PARENT,
+                        TableRow.LayoutParams.WRAP_CONTENT
+                ));
+
+                // Create and add the Schedule Id TextView
+                TextView id = new TextView(this);
+                id.setText(String.valueOf(schedule.getId()));
+                id.setPadding(8, 8, 8, 8);
+                id.setGravity(android.view.Gravity.CENTER);
+                id.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                row.addView(id);
+
+                // Create and add the Course TextView
+                TextView course = new TextView(this);
+                course.setText(schedule.getSubjectName());
+                course.setPadding(8, 8, 8, 8);
+                course.setGravity(android.view.Gravity.CENTER);
+                course.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                row.addView(course);
+
+                // Create and add the Time and Day TextView
+                TextView timeAndDay = new TextView(this);
+                timeAndDay.setText(schedule.getDayOfTheWeek() + " " + schedule.getClassStart() + " - " + schedule.getClassEnd());
+                timeAndDay.setPadding(8, 8, 8, 8);
+                timeAndDay.setGravity(android.view.Gravity.CENTER);
+                timeAndDay.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                row.addView(timeAndDay);
+
+                // Create and add the Block TextView
+                TextView block = new TextView(this);
+                block.setText(String.valueOf(schedule.getBlockId()));
+                block.setPadding(8, 8, 8, 8);
+                block.setGravity(android.view.Gravity.CENTER);
+                block.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                row.addView(block);
+
+                // Add the row to the table layout
+                tableLayout.addView(row);
+            }
+
+            // Calculate remaining rows needed to fill the space
+            int remainingRows = pageSize - (end - start);
+
+            // Add filler rows to take up remaining space
+            for (int i = 0; i < remainingRows; i++) {
+                TableRow fillerRow = new TableRow(this);
+                fillerRow.setLayoutParams(new TableRow.LayoutParams(
+                        TableRow.LayoutParams.MATCH_PARENT,
+                        0, 1f // Set the weight to 1 to evenly distribute space
+                ));
+
+                // Add empty or invisible TextViews to the filler row
+                TextView emptyView = new TextView(this);
+                emptyView.setText("");
+                fillerRow.addView(emptyView);
+
+                tableLayout.addView(fillerRow);
+            }
+
+            // Handle button visibility
+            previousPageButton.setEnabled(currentPage > 0);
+            nextPageButton.setEnabled(end < allSchedules.size());
+
+            // Update the page indicator
+            pageIndicator.setText(String.format("Page %d", currentPage + 1));
         }
-
-        // Handle button visibility
-        previousPageButton.setEnabled(currentPage > 0);
-        nextPageButton.setEnabled(end < allSchedules.size());
-
-        // Update the page indicator
-        pageIndicator.setText(String.format("Page %d", currentPage + 1));
     }
 }
