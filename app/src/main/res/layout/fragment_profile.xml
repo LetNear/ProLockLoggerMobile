@@ -124,7 +124,9 @@
             android:hint="Date of Birth"
             android:padding="12dp"
             android:focusable="false"
-            android:clickable="true" />
+            android:clickable="true"
+            android:inputType="date"
+            />
 
         <!-- Gender -->
         <Spinner

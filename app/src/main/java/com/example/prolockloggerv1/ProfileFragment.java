@@ -1,5 +1,6 @@
 package com.example.prolockloggerv1;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -55,6 +56,7 @@ public class ProfileFragment extends Fragment {
 
         // Set up the Spinner for gender
         setUpGenderSpinner();
+        setUpDateOfBirthPicker();
 
         // Check if user is signed in
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
@@ -79,6 +81,26 @@ public class ProfileFragment extends Fragment {
                 R.array.gender_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         genderSpinner.setAdapter(adapter);
+    }
+
+    private void setUpDateOfBirthPicker() {
+        binding.dateOfBirthEditText.setOnClickListener(v -> {
+            // Show DatePickerDialog
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(),
+                    (view, year1, month1, dayOfMonth) -> {
+                        // Format the date and set it to EditText
+                        Calendar selectedDate = Calendar.getInstance();
+                        selectedDate.set(year1, month1, dayOfMonth);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                        binding.dateOfBirthEditText.setText(dateFormat.format(selectedDate.getTime()));
+                    }, year, month, day);
+            datePickerDialog.show();
+        });
     }
 
     private void showGoogleSignInButton() {
@@ -173,12 +195,33 @@ public class ProfileFragment extends Fragment {
                     // Get the user details from the API response
                     UserDetailsResponse userDetails = response.body();
 
-                    // Populate the form fields with the user details
+                    // Define the date format used by your API
+                    SimpleDateFormat apiDateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                    SimpleDateFormat displayDateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()); // Adjust as needed
+
+                    // Handle Date of Birth
+                    try {
+                        // Parse the date string from the API
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(apiDateFormat.parse(userDetails.getDate_of_birth()));
+
+                        // Format the date to be displayed in the EditText
+                        String formattedDate = displayDateFormat.format(calendar.getTime());
+
+                        // Set the formatted date in the EditText
+                        binding.dateOfBirthEditText.setText(formattedDate);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        // Optionally set an error message or default value
+                        binding.dateOfBirthEditText.setText("Invalid date");
+                    }
+
+                    // Populate other form fields with the user details
                     binding.firstNameEditText.setText(userDetails.getFirst_name());
                     binding.middleNameEditText.setText(userDetails.getMiddle_name());
                     binding.lastNameEditText.setText(userDetails.getLast_name());
                     binding.suffixEditText.setText(userDetails.getSuffix());
-                    binding.dateOfBirthEditText.setText(userDetails.getDate_of_birth());
 
                     // Set the spinner selection based on the user's gender
                     ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) binding.genderSpinner.getAdapter();
@@ -200,6 +243,7 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
 
 
     private void saveUserDetails() {
@@ -261,11 +305,12 @@ public class ProfileFragment extends Fragment {
                 "completeAddress=" + completeAddress
         );
 
+
         // Get user email from SharedPreferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
         String userEmail = sharedPreferences.getString("user_email", "");
 
-        // Create a UserDetailsRequest object
+        // Create a UserDetailsRequest object with the date format
         UserDetailsRequest userDetailsRequest = new UserDetailsRequest(
                 userEmail, firstName, middleName, lastName, suffix, dateOfBirth, gender, contactNumber, completeAddress
         );
