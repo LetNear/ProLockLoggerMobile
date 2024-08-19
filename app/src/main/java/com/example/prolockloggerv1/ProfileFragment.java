@@ -161,42 +161,150 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadUserDetailsIntoForm() {
+        // Get user email from SharedPreferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
-        binding.firstNameEditText.setText(sharedPreferences.getString("user_first_name", ""));
-        binding.middleNameEditText.setText(sharedPreferences.getString("user_middle_name", ""));
-        binding.lastNameEditText.setText(sharedPreferences.getString("user_last_name", ""));
-        binding.suffixEditText.setText(sharedPreferences.getString("user_suffix", ""));
-        binding.dateOfBirthEditText.setText(sharedPreferences.getString("user_date_of_birth", ""));
+        String userEmail = sharedPreferences.getString("user_email", "");
 
-        // Ensure the Spinner is properly initialized
-        ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) binding.genderSpinner.getAdapter();
-        if (adapter != null) {
-            int position = adapter.getPosition(sharedPreferences.getString("user_gender", ""));
-            binding.genderSpinner.setSelection(position >= 0 ? position : 0);
-        }
+        // Make an API call to get user details
+        apiService.getUserDetails(userEmail).enqueue(new Callback<UserDetailsResponse>() {
+            @Override
+            public void onResponse(Call<UserDetailsResponse> call, Response<UserDetailsResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Get the user details from the API response
+                    UserDetailsResponse userDetails = response.body();
 
-        binding.contactNumberEditText.setText(sharedPreferences.getString("user_contact_number", ""));
-        binding.completeAddressEditText.setText(sharedPreferences.getString("user_complete_address", ""));
+                    // Populate the form fields with the user details
+                    binding.firstNameEditText.setText(userDetails.getFirst_name());
+                    binding.middleNameEditText.setText(userDetails.getMiddle_name());
+                    binding.lastNameEditText.setText(userDetails.getLast_name());
+                    binding.suffixEditText.setText(userDetails.getSuffix());
+                    binding.dateOfBirthEditText.setText(userDetails.getDate_of_birth());
+
+                    // Set the spinner selection based on the user's gender
+                    ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) binding.genderSpinner.getAdapter();
+                    if (adapter != null) {
+                        int position = adapter.getPosition(userDetails.getGender());
+                        binding.genderSpinner.setSelection(position >= 0 ? position : 0);
+                    }
+
+                    binding.contactNumberEditText.setText(userDetails.getContact_number());
+                    binding.completeAddressEditText.setText(userDetails.getComplete_address());
+                } else {
+                    Toast.makeText(getActivity(), "Failed to load user details", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserDetailsResponse> call, Throwable t) {
+                Toast.makeText(getActivity(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
 
     private void saveUserDetails() {
+        // Get user details from the form
+        String firstName = binding.firstNameEditText.getText().toString().trim();
+        String middleName = binding.middleNameEditText.getText().toString().trim();
+        String lastName = binding.lastNameEditText.getText().toString().trim();
+        String suffix = binding.suffixEditText.getText().toString().trim();
+        String dateOfBirth = binding.dateOfBirthEditText.getText().toString().trim();
+        String gender = binding.genderSpinner.getSelectedItem().toString();
+        String contactNumber = binding.contactNumberEditText.getText().toString().trim();
+        String completeAddress = binding.completeAddressEditText.getText().toString().trim();
+
+        // Validate all required fields
+        if (firstName.isEmpty()) {
+            Toast.makeText(getActivity(), "First name is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        if (middleName.isEmpty()) {
+            Toast.makeText(getActivity(), "Middle name is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        if (lastName.isEmpty()) {
+            Toast.makeText(getActivity(), "Last name is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        if (dateOfBirth.isEmpty()) {
+            Toast.makeText(getActivity(), "Date of birth is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        if (gender.isEmpty()) {
+            Toast.makeText(getActivity(), "Gender is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        if (contactNumber.isEmpty()) {
+            Toast.makeText(getActivity(), "Contact number is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        if (completeAddress.isEmpty()) {
+            Toast.makeText(getActivity(), "Complete address is required", Toast.LENGTH_SHORT).show();
+            return; // Exit method if validation fails
+        }
+
+        // Log the payload
+        Log.d("ProfileFragment", "Payload: " +
+                "firstName=" + firstName + ", " +
+                "middleName=" + middleName + ", " +
+                "lastName=" + lastName + ", " +
+                "suffix=" + suffix + ", " +
+                "dateOfBirth=" + dateOfBirth + ", " +
+                "gender=" + gender + ", " +
+                "contactNumber=" + contactNumber + ", " +
+                "completeAddress=" + completeAddress
+        );
+
+        // Get user email from SharedPreferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("user_first_name", binding.firstNameEditText.getText().toString());
-        editor.putString("user_middle_name", binding.middleNameEditText.getText().toString());
-        editor.putString("user_last_name", binding.lastNameEditText.getText().toString());
-        editor.putString("user_suffix", binding.suffixEditText.getText().toString());
-        editor.putString("user_date_of_birth", binding.dateOfBirthEditText.getText().toString());
-        editor.putString("user_gender", binding.genderSpinner.getSelectedItem().toString());
-        editor.putString("user_contact_number", binding.contactNumberEditText.getText().toString());
-        editor.putString("user_complete_address", binding.completeAddressEditText.getText().toString());
-        editor.apply();
+        String userEmail = sharedPreferences.getString("user_email", "");
 
-        Toast.makeText(getActivity(), "User details updated successfully", Toast.LENGTH_SHORT).show();
+        // Create a UserDetailsRequest object
+        UserDetailsRequest userDetailsRequest = new UserDetailsRequest(
+                userEmail, firstName, middleName, lastName, suffix, dateOfBirth, gender, contactNumber, completeAddress
+        );
 
-        // After saving, show the profile view again
-        showUserProfileView();
+        // Make the API call to update user details
+        apiService.updateUserDetails(userDetailsRequest).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                Log.d("ProfileFragment", "API Response Code: " + response.code());
+                Log.d("ProfileFragment", "API Response Body: " + response.message());
+
+                if (response.isSuccessful()) {
+                    // Handle success
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("user_first_name", firstName);
+                    editor.putString("user_middle_name", middleName);
+                    editor.putString("user_last_name", lastName);
+                    editor.putString("user_suffix", suffix);
+                    editor.putString("user_date_of_birth", dateOfBirth);
+                    editor.putString("user_gender", gender);
+                    editor.putString("user_contact_number", contactNumber);
+                    editor.putString("user_complete_address", completeAddress);
+                    editor.apply();
+
+                    Toast.makeText(getActivity(), "User details updated successfully", Toast.LENGTH_SHORT).show();
+                    showUserProfileView();
+                } else {
+                    Toast.makeText(getActivity(), "Failed to update user details", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(getActivity(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {

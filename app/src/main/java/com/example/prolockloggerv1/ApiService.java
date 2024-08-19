@@ -6,6 +6,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -18,4 +19,14 @@ public interface ApiService {
 
     @GET("users/{email}")
     Call<Account> getAccount(@Path("email") String email);
+
+    @GET("userInfo/{email}")
+    Call<UserDetailsResponse> getUserDetails(@Path("email") String email);
+
+    @PUT("userInfo/update")
+    Call<Void> updateUserDetails(@Body UserDetailsRequest userDetailsRequest);
+
+
+
+
 }
