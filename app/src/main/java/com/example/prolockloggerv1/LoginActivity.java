@@ -90,6 +90,7 @@ public class LoginActivity extends AppCompatActivity {
         editor.putString("user_email", email);
         editor.putString("user_first_name", firstName);
         editor.putString("user_last_name", lastName);
+        editor.putBoolean("is_signed_in", true);
         editor.apply();
 
         // Check if email is registered in the database

@@ -7,6 +7,8 @@ public class Schedule {
     private String class_start;
     private String class_end;
     private int block_id;
+    private Block block; // Add this if you have a Block object
+    private String year; // Add this if you have a year field
 
     // Getters and Setters
     public int getId() {
@@ -55,5 +57,35 @@ public class Schedule {
 
     public void setBlockId(int block_id) {
         this.block_id = block_id;
+    }
+
+    public Block getBlock() { // Add this if you have a Block object
+        return block;
+    }
+
+    public void setBlock(Block block) { // Add this if you have a Block object
+        this.block = block;
+    }
+
+    public String getYear() { // Add this if you have a year field
+        return year;
+    }
+
+    public void setYear(String year) { // Add this if you have a year field
+        this.year = year;
+    }
+
+    // Nested Block class if needed
+    public static class Block {
+        private String block;
+
+        // Getter and Setter
+        public String getBlock() {
+            return block;
+        }
+
+        public void setBlock(String block) {
+            this.block = block;
+        }
     }
 }

@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,9 +34,10 @@ public class ScheduleFragment extends Fragment {
     private TextView pageIndicator, userNameTextView;
     private List<Schedule> allSchedules;
     private int currentPage = 0;
-    private int pageSize = 15;
+    private int pageSize = 6;
     private static final int REFRESH_INTERVAL_MS = 5000;
     private Handler handler = new Handler();
+    private ScheduleApi scheduleApi;
 
     @Nullable
     @Override
@@ -45,6 +47,12 @@ public class ScheduleFragment extends Fragment {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
         String userName = sharedPreferences.getString("user_name", "Guest");
         boolean isSignedIn = sharedPreferences.getBoolean("is_signed_in", false); // Retrieve sign-in status
+        String userEmail = sharedPreferences.getString("user_email", ""); // Retrieve user email
+
+        // Debugging: Log the sign-in status and user name
+        Log.d("ScheduleFragment", "User Name: " + userName);
+        Log.d("ScheduleFragment", "Is Signed In: " + isSignedIn);
+        Log.d("ScheduleFragment", "User Email: " + userEmail);
 
         userNameTextView = rootView.findViewById(R.id.user_name);
         userNameTextView.setText("Welcome, " + userName);
@@ -56,6 +64,13 @@ public class ScheduleFragment extends Fragment {
         backButton = rootView.findViewById(R.id.backButton);
 
         allSchedules = new ArrayList<>();
+
+        // Initialize Retrofit and ScheduleApi
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://prolocklogger.pro/api/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        scheduleApi = retrofit.create(ScheduleApi.class);
 
         // Only load schedules if the user is signed in
         if (isSignedIn) {
@@ -98,23 +113,34 @@ public class ScheduleFragment extends Fragment {
     };
 
     private void loadSchedules() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://prolocklogger.pro/api/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
+        String userEmail = sharedPreferences.getString("user_email", "");
 
-        ScheduleApi scheduleApi = retrofit.create(ScheduleApi.class);
-
-        Call<List<Schedule>> call = scheduleApi.getSchedules();
+        Call<List<Schedule>> call = scheduleApi.getSchedulesByEmail(userEmail);
         call.enqueue(new Callback<List<Schedule>>() {
             @Override
             public void onResponse(Call<List<Schedule>> call, Response<List<Schedule>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    allSchedules = response.body();
-                    Log.d("ScheduleFragment", "Schedules fetched: " + allSchedules.size());
-                    displayPage(currentPage);
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        allSchedules = response.body();
+                        Log.d("ScheduleFragment", "Schedules fetched: " + allSchedules.size());
+                        displayPage(currentPage);
+                    } else {
+                        Log.d("ScheduleFragment", "Empty response body.");
+                        Toast.makeText(getActivity(), "No schedules found.", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
+                    // Log the error body if available
+                    String errorBody = "";
+                    if (response.errorBody() != null) {
+                        try {
+                            errorBody = response.errorBody().string();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     Log.d("ScheduleFragment", "Failed to load schedules. Response code: " + response.code());
+                    Log.d("ScheduleFragment", "Response body: " + errorBody);
                     Toast.makeText(getActivity(), "Failed to load schedules", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -126,6 +152,7 @@ public class ScheduleFragment extends Fragment {
             }
         });
     }
+
 
     private void displayNotSignedInMessage() {
         // Clear existing rows (except the header)
@@ -222,43 +249,27 @@ public class ScheduleFragment extends Fragment {
                 timeAndDay.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
                 row.addView(timeAndDay);
 
-                TextView block = new TextView(getActivity());
-                block.setText(String.valueOf(schedule.getBlockId()));
-                block.setPadding(8, 8, 8, 8);
-                block.setGravity(android.view.Gravity.CENTER);
-                block.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(block);
+                // Combine block and year
+                TextView blockAndYear = new TextView(getActivity());
+                String blockAndYearText = schedule.getYear() + " - " + schedule.getBlock().getBlock();
+                blockAndYear.setText(blockAndYearText);
+                blockAndYear.setPadding(8, 8, 8, 8);
+                blockAndYear.setGravity(android.view.Gravity.CENTER);
+                blockAndYear.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                row.addView(blockAndYear);
 
                 tableLayout.addView(row);
             }
 
-            // Add filler rows if needed to reach pageSize
-            int remainingRows = pageSize - (end - start);
-            for (int i = 0; i < remainingRows; i++) {
-                TableRow fillerRow = new TableRow(getActivity());
-                fillerRow.setLayoutParams(new TableRow.LayoutParams(
-                        TableRow.LayoutParams.MATCH_PARENT,
-                        TableRow.LayoutParams.WRAP_CONTENT
-                ));
-
-                TextView fillerCell = new TextView(getActivity());
-                fillerCell.setText(" ");
-                fillerCell.setPadding(8, 8, 8, 8);
-                fillerCell.setGravity(android.view.Gravity.CENTER);
-                fillerCell.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 4));
-                fillerRow.addView(fillerCell);
-
-                tableLayout.addView(fillerRow);
-            }
-
-            // Update page indicator and navigation buttons
             previousPageButton.setEnabled(page > 0);
             nextPageButton.setEnabled(end < allSchedules.size());
+
             pageIndicator.setText("Page " + (page + 1));
         }
     }
 
+
     private int getMaxPage() {
-        return (allSchedules.size() - 1) / pageSize;
+        return (allSchedules.size() / pageSize) + (allSchedules.size() % pageSize == 0 ? 0 : 1) - 1;
     }
 }

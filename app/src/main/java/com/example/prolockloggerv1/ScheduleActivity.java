@@ -49,6 +49,7 @@ public class ScheduleActivity extends AppCompatActivity {
         // Retrieve user details from SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
         String userName = sharedPreferences.getString("user_name", "Guest");
+        String userEmail = sharedPreferences.getString("user_email", "");
 
         // Display the user name
         userNameTextView = findViewById(R.id.user_name);
@@ -65,29 +66,21 @@ public class ScheduleActivity extends AppCompatActivity {
         // Start periodic refresh
         handler.post(refreshRunnable);
 
-        nextPageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                currentPage++;
-                displayPage(currentPage);
-            }
+        nextPageButton.setOnClickListener(v -> {
+            currentPage++;
+            displayPage(currentPage);
         });
 
-        previousPageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                currentPage--;
-                displayPage(currentPage);
-            }
+        previousPageButton.setOnClickListener(v -> {
+            currentPage--;
+            displayPage(currentPage);
         });
 
         // Set up back button click listener
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed(); // Handle back navigation
-            }
-        });
+        backButton.setOnClickListener(v -> onBackPressed()); // Handle back navigation
+
+        // Load schedules filtered by user email
+        loadSchedules(userEmail);
     }
 
     @Override
@@ -96,15 +89,19 @@ public class ScheduleActivity extends AppCompatActivity {
         // Stop the periodic refresh when the activity is destroyed
         handler.removeCallbacks(refreshRunnable);
     }
+
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-            loadSchedules();
+            // Retrieve user email from SharedPreferences
+            SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+            String userEmail = sharedPreferences.getString("user_email", "");
+            loadSchedules(userEmail);
             handler.postDelayed(this, REFRESH_INTERVAL_MS);
         }
     };
 
-    private void loadSchedules() {
+    private void loadSchedules(String userEmail) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://prolocklogger.pro/api/")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -112,7 +109,8 @@ public class ScheduleActivity extends AppCompatActivity {
 
         ScheduleApi scheduleApi = retrofit.create(ScheduleApi.class);
 
-        Call<List<Schedule>> call = scheduleApi.getSchedules();
+        // Pass the user's email to the API call
+        Call<List<Schedule>> call = scheduleApi.getSchedulesByEmail(userEmail);
         call.enqueue(new Callback<List<Schedule>>() {
             @Override
             public void onResponse(Call<List<Schedule>> call, Response<List<Schedule>> response) {
