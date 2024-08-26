@@ -26,7 +26,10 @@ public interface ApiService {
     @PUT("userInfo/update")
     Call<Void> updateUserDetails(@Body UserDetailsRequest userDetailsRequest);
 
-
-
-
+    @GET("userInfo/{email}")
+    Call<CheckEmailResponse> checkEmailRegistration(@Path("email") String email);
 }
+
+
+
+

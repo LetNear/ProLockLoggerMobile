@@ -1,5 +1,4 @@
 package com.example.prolockloggerv1;
-
 public class UserDetailsRequest {
     private String email;
     private String first_name;
@@ -11,16 +10,17 @@ public class UserDetailsRequest {
     private String contact_number;
     private String complete_address;
 
-    public UserDetailsRequest(String email, String first_name, String middle_name, String last_name, String suffix,
-                              String date_of_birth, String gender, String contact_number, String complete_address) {
-        this.email = email;
-        this.first_name = first_name;
-        this.middle_name = middle_name;
-        this.last_name = last_name;
+    public UserDetailsRequest(String userEmail, String firstName, String middleName, String lastName, String suffix, String dateOfBirth, String gender, String contactNumber, String completeAddress) {
+        this.email = userEmail;
+        this.first_name = firstName;
+        this.middle_name = middleName;
+        this.last_name = lastName;
         this.suffix = suffix;
-        this.date_of_birth = date_of_birth;
+        this.date_of_birth = dateOfBirth;
         this.gender = gender;
-        this.contact_number = contact_number;
-        this.complete_address = complete_address;
+        this.contact_number = contactNumber;
+        this.complete_address = completeAddress;
     }
+
+    // Getters and setters...
 }

@@ -1,5 +1,6 @@
 package com.example.prolockloggerv1;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,11 +19,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
-        setContentView(binding.getRoot());
 
         // Check if intent has extra data to show HomeFragment
         if (getIntent().getBooleanExtra("show_home_fragment", false)) {
@@ -51,13 +52,20 @@ public class MainActivity extends AppCompatActivity {
                     return false;
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         // Check if user session exists
         SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
-        if (sharedPreferences.contains("user_email")) {
-            // Load user session if exists
-            String userEmail = sharedPreferences.getString("user_email", "");
-            Log.d("MainActivity", "User email from session: " + userEmail);
+        if (!sharedPreferences.contains("user_email")) {
+            // Redirect to LoginActivity if no user session
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();  // Prevent returning to MainActivity
         }
     }
 
@@ -65,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private void replaceFragment(@NonNull Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, fragment)  // Make sure you have a FrameLayout with this id in your layout file
+                .replace(R.id.fragment_container, fragment)
                 .commit();
     }
 }
