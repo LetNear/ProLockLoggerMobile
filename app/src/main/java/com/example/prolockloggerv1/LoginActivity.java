@@ -85,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
         String lastName = account.getFamilyName();
         String username = account.getDisplayName();
 
-        // Save user data to SharedPreferences
+        // Save user data to SharedPreferences except role_number
         SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("user_email", email);
@@ -115,7 +115,15 @@ public class LoginActivity extends AppCompatActivity {
                         CheckEmailResponse checkEmailResponse = response.body();
                         // Check if the email is present in the response, assuming email presence indicates registration
                         if (checkEmailResponse.getEmail() != null && !checkEmailResponse.getEmail().isEmpty()) {
-                            // Email is registered, proceed with sign-in
+                            // Email is registered, save the role_number to SharedPreferences
+                            String roleNumber = checkEmailResponse.getRoleNumber();
+
+                            SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putString("role_number", roleNumber);
+                            editor.apply();
+
+                            // Proceed with sign-in
                             redirectToMainActivity();
                         } else {
                             // Email is not registered, show error message
@@ -127,39 +135,13 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, "Unexpected error: Response body is null", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // Handle different HTTP response codes
-                    switch (response.code()) {
-                        case 400:
-                            Toast.makeText(LoginActivity.this, "Bad Request: The server could not understand the request.", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 401:
-                            Toast.makeText(LoginActivity.this, "Unauthorized: Access is denied due to invalid credentials.", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 404:
-                            Toast.makeText(LoginActivity.this, "Email is not Registered!", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 500:
-                            Toast.makeText(LoginActivity.this, "Server Error: The server encountered an error.", Toast.LENGTH_SHORT).show();
-                            break;
-                        default:
-                            Toast.makeText(LoginActivity.this, "Unexpected error: " + response.code(), Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                    Log.e("LoginActivity", "Response error: " + response.code() + " - " + response.message());
+                    handleResponseError(response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<CheckEmailResponse> call, Throwable t) {
-                // Handle different types of network errors
-                if (t instanceof java.net.SocketTimeoutException) {
-                    Toast.makeText(LoginActivity.this, "Network timeout. Please try again later.", Toast.LENGTH_SHORT).show();
-                } else if (t instanceof java.net.UnknownHostException) {
-                    Toast.makeText(LoginActivity.this, "No internet connection. Please check your network settings.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(LoginActivity.this, "Failed to connect to the server. Please try again later.", Toast.LENGTH_SHORT).show();
-                }
-                Log.e("LoginActivity", "Network error: " + t.getMessage(), t);
+                handleNetworkError(t);
             }
         });
     }
@@ -186,7 +168,16 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-
+    private void handleNetworkError(Throwable t) {
+        if (t instanceof java.net.SocketTimeoutException) {
+            Toast.makeText(LoginActivity.this, "Network timeout. Please try again later.", Toast.LENGTH_SHORT).show();
+        } else if (t instanceof java.net.UnknownHostException) {
+            Toast.makeText(LoginActivity.this, "No internet connection. Please check your network settings.", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(LoginActivity.this, "Failed to connect to the server. Please try again later.", Toast.LENGTH_SHORT).show();
+        }
+        Log.e("LoginActivity", "Network error: " + t.getMessage(), t);
+    }
 
 
     private void redirectToMainActivity() {

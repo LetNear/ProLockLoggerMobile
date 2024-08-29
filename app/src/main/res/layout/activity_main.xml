@@ -32,7 +32,7 @@
             android:layout_margin="20dp"
             app:labelVisibilityMode="labeled"
             android:background="@android:color/transparent"
-            app:menu="@menu/bottom_menu" />
+            app:menu="@menu/bottom_nav_role_2" />
 
     </com.google.android.material.bottomappbar.BottomAppBar>
 
