@@ -1,6 +1,5 @@
 package com.example.prolockloggerv1;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,7 +18,7 @@ import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
-    private TextView stat1Value, stat2Value, stat3Value;
+    private TextView stat1Value, stat2Value, stat3Value, welcomeText;
     private Button getStartedButton;
 
     @Override
@@ -31,32 +30,31 @@ public class HomeFragment extends Fragment {
         // Initialize views
         stat1Value = view.findViewById(R.id.stat1Value);
         stat2Value = view.findViewById(R.id.stat2Value);
-        stat3Value = view.findViewById(R.id.stat3Value);
-        getStartedButton = view.findViewById(R.id.getStartedButton);
+        welcomeText = view.findViewById(R.id.welcomeText);
 
-        // Fetch the email from SharedPreferences
+        // Fetch the user name and email from SharedPreferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getContext().MODE_PRIVATE);
+        String userName = sharedPreferences.getString("user_name", "");
         String email = sharedPreferences.getString("user_email", "");
 
+        // Update the welcome text
+        if (!userName.isEmpty()) {
+            welcomeText.setText("Welcome " + userName);
+        }
+
         if (!email.isEmpty()) {
-            fetchStudentCount(email);  // Use the correct method based on your needs
-            fetchScheduleCount(email); // Use the correct method based on your needs
+            fetchStudentCount(email);
+            fetchScheduleCount(email);
         } else {
             Toast.makeText(getContext(), "No email found in session", Toast.LENGTH_SHORT).show();
         }
-
-        // Set onClick listener for the button
-        getStartedButton.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), ScheduleActivity.class);
-            startActivity(intent);
-        });
 
         return view;
     }
 
     private void fetchStudentCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        Call<StudentCountResponse> call = apiService.getStudentCountByEmail(email); // Update method name here
+        Call<StudentCountResponse> call = apiService.getStudentCountByEmail(email);
 
         call.enqueue(new Callback<StudentCountResponse>() {
             @Override
@@ -78,7 +76,7 @@ public class HomeFragment extends Fragment {
 
     private void fetchScheduleCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        Call<StudentCountResponse> call = apiService.getScheduleCountByEmail(email); // Update method name here
+        Call<StudentCountResponse> call = apiService.getScheduleCountByEmail(email);
 
         call.enqueue(new Callback<StudentCountResponse>() {
             @Override

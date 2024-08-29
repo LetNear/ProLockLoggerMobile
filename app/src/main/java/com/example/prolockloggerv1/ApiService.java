@@ -35,6 +35,9 @@ public interface ApiService {
     // Endpoint for instructor schedule count
     @GET("instructor/schedule-count/{email}")
     Call<StudentCountResponse> getScheduleCountByEmail(@Path("email") String email);
+
+    @GET("instructor/next-schedule/{email}")
+    Call<NextScheduleResponse> getNextScheduleTimeByEmail(@Path("email") String email);
 }
 
 
