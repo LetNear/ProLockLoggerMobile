@@ -146,6 +146,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+
     private void handleResponseError(int responseCode) {
         switch (responseCode) {
             case 400:
