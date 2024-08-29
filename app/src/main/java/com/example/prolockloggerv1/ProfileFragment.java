@@ -87,7 +87,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showUserProfileView() {
-        binding.signInButton.setVisibility(View.GONE);
+
         binding.userDetailFormLayout.setVisibility(View.GONE);
 
         binding.userProfileLayout.setVisibility(View.VISIBLE);

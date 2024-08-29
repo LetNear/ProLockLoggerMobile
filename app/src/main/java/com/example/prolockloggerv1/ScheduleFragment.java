@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -30,11 +31,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ScheduleFragment extends Fragment {
 
     private TableLayout tableLayout;
-    private Button nextPageButton, previousPageButton, backButton;
+    private Button nextPageButton, previousPageButton, backButton, searchButton;
     private TextView pageIndicator, userNameTextView;
+    private EditText searchBar;
     private List<Schedule> allSchedules;
+    private List<Schedule> filteredSchedules;
     private int currentPage = 0;
-    private int pageSize = 6;
+    private int pageSize = 5;
     private static final int REFRESH_INTERVAL_MS = 5000;
     private Handler handler = new Handler();
     private ScheduleApi scheduleApi;
@@ -49,11 +52,6 @@ public class ScheduleFragment extends Fragment {
         boolean isSignedIn = sharedPreferences.getBoolean("is_signed_in", false); // Retrieve sign-in status
         String userEmail = sharedPreferences.getString("user_email", ""); // Retrieve user email
 
-        // Debugging: Log the sign-in status and user name
-        Log.d("ScheduleFragment", "User Name: " + userName);
-        Log.d("ScheduleFragment", "Is Signed In: " + isSignedIn);
-        Log.d("ScheduleFragment", "User Email: " + userEmail);
-
         userNameTextView = rootView.findViewById(R.id.user_name);
         userNameTextView.setText("Welcome, " + userName);
 
@@ -62,8 +60,11 @@ public class ScheduleFragment extends Fragment {
         previousPageButton = rootView.findViewById(R.id.previousPageButton);
         pageIndicator = rootView.findViewById(R.id.pageIndicator);
         backButton = rootView.findViewById(R.id.backButton);
+        searchBar = rootView.findViewById(R.id.searchBar);
+        searchButton = rootView.findViewById(R.id.searchButton);
 
         allSchedules = new ArrayList<>();
+        filteredSchedules = new ArrayList<>();
 
         // Initialize Retrofit and ScheduleApi
         Retrofit retrofit = new Retrofit.Builder()
@@ -95,6 +96,8 @@ public class ScheduleFragment extends Fragment {
 
         backButton.setOnClickListener(v -> getActivity().onBackPressed());
 
+        searchButton.setOnClickListener(v -> performSearch());
+
         return rootView;
     }
 
@@ -123,6 +126,8 @@ public class ScheduleFragment extends Fragment {
                 if (response.isSuccessful()) {
                     if (response.body() != null) {
                         allSchedules = response.body();
+                        filteredSchedules.clear();
+                        filteredSchedules.addAll(allSchedules);
                         Log.d("ScheduleFragment", "Schedules fetched: " + allSchedules.size());
                         displayPage(currentPage);
                     } else {
@@ -130,7 +135,6 @@ public class ScheduleFragment extends Fragment {
                         Toast.makeText(getActivity(), "No schedules found.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // Log the error body if available
                     String errorBody = "";
                     if (response.errorBody() != null) {
                         try {
@@ -141,7 +145,7 @@ public class ScheduleFragment extends Fragment {
                     }
                     Log.d("ScheduleFragment", "Failed to load schedules. Response code: " + response.code());
                     Log.d("ScheduleFragment", "Response body: " + errorBody);
-                    Toast.makeText(getActivity(), "Failed to load schedules", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "No schedule found", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -153,9 +157,36 @@ public class ScheduleFragment extends Fragment {
         });
     }
 
+    private void performSearch() {
+        String query = searchBar.getText().toString().toLowerCase();
+
+        filteredSchedules.clear();
+        for (Schedule schedule : allSchedules) {
+            boolean matches = false;
+            if (String.valueOf(schedule.getId()).toLowerCase().contains(query)) {
+                matches = true;
+            } else if (schedule.getSubjectName() != null && schedule.getSubjectName().toLowerCase().contains(query)) {
+                matches = true;
+            } else if (schedule.getDayOfTheWeek() != null && schedule.getDayOfTheWeek().toLowerCase().contains(query)) {
+                matches = true;
+            } else if (schedule.getClassStart() != null && schedule.getClassStart().toLowerCase().contains(query)) {
+                matches = true;
+            } else if (schedule.getClassEnd() != null && schedule.getClassEnd().toLowerCase().contains(query)) {
+                matches = true;
+            } else if (schedule.getBlock() != null && schedule.getBlock().getBlock().toLowerCase().contains(query)) {
+                matches = true;
+            }
+
+            if (matches) {
+                filteredSchedules.add(schedule);
+            }
+        }
+
+        currentPage = 0;
+        displayPage(currentPage);
+    }
 
     private void displayNotSignedInMessage() {
-        // Clear existing rows (except the header)
         if (tableLayout.getChildCount() > 1) {
             tableLayout.removeViews(1, tableLayout.getChildCount() - 1);
         }
@@ -178,11 +209,9 @@ public class ScheduleFragment extends Fragment {
         row.addView(noDataTextView);
         tableLayout.addView(row);
 
-        // Disable page navigation buttons
         previousPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
 
-        // Update the page indicator
         pageIndicator.setText("Page 1");
     }
 
@@ -192,7 +221,7 @@ public class ScheduleFragment extends Fragment {
             tableLayout.removeViews(1, tableLayout.getChildCount() - 1);
         }
 
-        if (allSchedules.isEmpty()) {
+        if (filteredSchedules.isEmpty()) {
             TableRow row = new TableRow(getActivity());
             row.setLayoutParams(new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
@@ -217,59 +246,74 @@ public class ScheduleFragment extends Fragment {
             pageIndicator.setText("Page 1");
         } else {
             int start = page * pageSize;
-            int end = Math.min(start + pageSize, allSchedules.size());
+            int end = Math.min(start + pageSize, filteredSchedules.size());
 
             for (int i = start; i < end; i++) {
-                Schedule schedule = allSchedules.get(i);
-
+                Schedule schedule = filteredSchedules.get(i);
                 TableRow row = new TableRow(getActivity());
                 row.setLayoutParams(new TableRow.LayoutParams(
                         TableRow.LayoutParams.MATCH_PARENT,
                         TableRow.LayoutParams.WRAP_CONTENT
                 ));
 
-                TextView id = new TextView(getActivity());
-                id.setText(String.valueOf(schedule.getId()));
-                id.setPadding(8, 8, 8, 8);
-                id.setGravity(android.view.Gravity.CENTER);
-                id.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(id);
+                // Create LayoutParams with weight for each TextView
+                TableRow.LayoutParams textViewParams = new TableRow.LayoutParams(
+                        0,
+                        TableRow.LayoutParams.WRAP_CONTENT,
+                        1.0f
+                );
 
-                TextView course = new TextView(getActivity());
-                course.setText(schedule.getSubjectName());
-                course.setPadding(8, 8, 8, 8);
-                course.setGravity(android.view.Gravity.CENTER);
-                course.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(course);
+                TextView idTextView = new TextView(getActivity());
+                idTextView.setText(String.valueOf(schedule.getId()));
+                idTextView.setPadding(8, 8, 8, 8);
+                idTextView.setLayoutParams(textViewParams);
 
-                TextView timeAndDay = new TextView(getActivity());
-                timeAndDay.setText(schedule.getDayOfTheWeek() + " " + schedule.getClassStart() + " - " + schedule.getClassEnd());
-                timeAndDay.setPadding(8, 8, 8, 8);
-                timeAndDay.setGravity(android.view.Gravity.CENTER);
-                timeAndDay.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(timeAndDay);
+                TextView subjectTextView = new TextView(getActivity());
+                subjectTextView.setText(schedule.getSubjectName() != null ? schedule.getSubjectName() : "N/A");
+                subjectTextView.setPadding(8, 8, 8, 8);
+                subjectTextView.setLayoutParams(textViewParams);
 
-                // Combine block and year
-                TextView blockAndYear = new TextView(getActivity());
-                String blockAndYearText = schedule.getYear() + " - " + schedule.getBlock().getBlock();
-                blockAndYear.setText(blockAndYearText);
-                blockAndYear.setPadding(8, 8, 8, 8);
-                blockAndYear.setGravity(android.view.Gravity.CENTER);
-                blockAndYear.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(blockAndYear);
+                TextView timeTextView = new TextView(getActivity());
+                String classTime = (schedule.getDayOfTheWeek() != null ? schedule.getDayOfTheWeek() : "N/A") + ": " +
+                        (schedule.getClassStart() != null ? schedule.getClassStart() : "N/A") + " - " +
+                        (schedule.getClassEnd() != null ? schedule.getClassEnd() : "N/A");
+                timeTextView.setText(classTime);
+                timeTextView.setPadding(8, 8, 8, 8);
+                timeTextView.setLayoutParams(textViewParams);
+
+
+
+                TextView blockYearTextView = new TextView(getActivity());
+
+                // Ensure both block and year are not null
+                String block = schedule.getBlock() != null ? schedule.getBlock().getBlock() : "N/A";
+                String year = schedule.getYear() != null ? schedule.getYear() : "N/A";
+                blockYearTextView.setText(block + "-" + year); // Concatenate block and year
+
+                blockYearTextView.setPadding(8, 8, 8, 8);
+                blockYearTextView.setLayoutParams(textViewParams);
+
+                row.addView(idTextView);
+                row.addView(subjectTextView);
+                row.addView(timeTextView);
+
+                row.addView(blockYearTextView);
 
                 tableLayout.addView(row);
             }
 
-            previousPageButton.setEnabled(page > 0);
-            nextPageButton.setEnabled(end < allSchedules.size());
+            previousPageButton.setEnabled(currentPage > 0);
+            nextPageButton.setEnabled(currentPage < getMaxPage());
 
-            pageIndicator.setText("Page " + (page + 1));
+            pageIndicator.setText("Page " + (currentPage + 1) + " of " + (getMaxPage() + 1));
         }
     }
 
 
+
+
+
     private int getMaxPage() {
-        return (allSchedules.size() / pageSize) + (allSchedules.size() % pageSize == 0 ? 0 : 1) - 1;
+        return (int) Math.floor((double) filteredSchedules.size() / pageSize) - 1;
     }
 }

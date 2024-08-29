@@ -83,6 +83,7 @@ public class LoginActivity extends AppCompatActivity {
         String email = account.getEmail();
         String firstName = account.getGivenName();
         String lastName = account.getFamilyName();
+        String username = account.getDisplayName();
 
         // Save user data to SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
@@ -91,6 +92,7 @@ public class LoginActivity extends AppCompatActivity {
         editor.putString("user_first_name", firstName);
         editor.putString("user_last_name", lastName);
         editor.putBoolean("is_signed_in", true);
+        editor.putString("user_name", username);
         editor.apply();
 
         // Check if email is registered in the database
@@ -134,7 +136,7 @@ public class LoginActivity extends AppCompatActivity {
                             Toast.makeText(LoginActivity.this, "Unauthorized: Access is denied due to invalid credentials.", Toast.LENGTH_SHORT).show();
                             break;
                         case 404:
-                            Toast.makeText(LoginActivity.this, "Not Found: The requested resource could not be found.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, "Email is not Registered!", Toast.LENGTH_SHORT).show();
                             break;
                         case 500:
                             Toast.makeText(LoginActivity.this, "Server Error: The server encountered an error.", Toast.LENGTH_SHORT).show();

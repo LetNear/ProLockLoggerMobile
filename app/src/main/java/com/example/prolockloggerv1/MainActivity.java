@@ -3,7 +3,6 @@ package com.example.prolockloggerv1;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
+
+        // Set the background color of the bottom navigation to blue
+        binding.bottomNavigationView.setBackgroundColor(getResources().getColor(R.color.blue));
 
         // Check if intent has extra data to show HomeFragment
         if (getIntent().getBooleanExtra("show_home_fragment", false)) {
