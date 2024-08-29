@@ -59,7 +59,7 @@ public class ScheduleFragment extends Fragment {
         nextPageButton = rootView.findViewById(R.id.nextPageButton);
         previousPageButton = rootView.findViewById(R.id.previousPageButton);
         pageIndicator = rootView.findViewById(R.id.pageIndicator);
-        backButton = rootView.findViewById(R.id.backButton);
+
         searchBar = rootView.findViewById(R.id.searchBar);
         searchButton = rootView.findViewById(R.id.searchButton);
 
@@ -94,7 +94,6 @@ public class ScheduleFragment extends Fragment {
             }
         });
 
-        backButton.setOnClickListener(v -> getActivity().onBackPressed());
 
         searchButton.setOnClickListener(v -> performSearch());
 
