@@ -2,10 +2,11 @@ package com.example.prolockloggerv1;
 
 import java.util.List;
 
-public class ScheduleResponse {
+public class ScheduleCountResponse {
     private List<Schedule> data;  // List to hold Schedule objects
     private int total;            // Total number of schedules (if available)
-    private int totalPages;       // Total number of pages (if available)
+    private int totalPages;
+    private int scheduleCount; // Total number of pages (if available)
 
     // Getter for schedules
     public List<Schedule> getData() {
@@ -35,5 +36,12 @@ public class ScheduleResponse {
     // Setter for total pages
     public void setTotalPages(int totalPages) {
         this.totalPages = totalPages;
+    }
+    public int getScheduleCount() {
+        return scheduleCount;
+    }
+
+    public void setScheduleCount(int scheduleCount) {
+        this.scheduleCount = scheduleCount;
     }
 }

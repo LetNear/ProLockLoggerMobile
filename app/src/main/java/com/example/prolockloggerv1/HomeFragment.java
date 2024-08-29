@@ -18,7 +18,7 @@ import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
-    private TextView stat1Value, stat2Value, stat3Value, welcomeText;
+    private TextView stat1Title, stat1Value, stat2Title, stat2Value, welcomeText;
     private Button getStartedButton;
 
     @Override
@@ -28,25 +28,67 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         // Initialize views
+        stat1Title = view.findViewById(R.id.stat1Title);
         stat1Value = view.findViewById(R.id.stat1Value);
+        stat2Title = view.findViewById(R.id.stat2Title);
         stat2Value = view.findViewById(R.id.stat2Value);
         welcomeText = view.findViewById(R.id.welcomeText);
 
-        // Fetch the user name and email from SharedPreferences
+        // Fetch the user data from SharedPreferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getContext().MODE_PRIVATE);
         String userName = sharedPreferences.getString("user_name", "");
         String email = sharedPreferences.getString("user_email", "");
+        String roleNumber = sharedPreferences.getString("role_number", "");
 
         // Update the welcome text
         if (!userName.isEmpty()) {
             welcomeText.setText("Welcome " + userName);
         }
 
+        // Set initial visibility to GONE
+        stat1Title.setVisibility(View.GONE);
+        stat1Value.setVisibility(View.GONE);
+        stat2Title.setVisibility(View.GONE);
+        stat2Value.setVisibility(View.GONE);
+
         if (!email.isEmpty()) {
-            fetchStudentCount(email);
-            fetchScheduleCount(email);
+            if ("2".equals(roleNumber)) {
+                // Role number 2: Fetch student and schedule counts
+                stat1Title.setText("Total Students: ");
+                stat2Title.setText("Total Schedules: ");
+                fetchStudentCount(email);
+                fetchScheduleCount(email);
+                // Show the labels and values for role 2
+                stat1Title.setVisibility(View.VISIBLE);
+                stat1Value.setVisibility(View.VISIBLE);
+                stat2Title.setVisibility(View.VISIBLE);
+                stat2Value.setVisibility(View.VISIBLE);
+            } else if ("3".equals(roleNumber)) {
+                // Role number 3: Fetch student schedule count and total logs count
+                stat1Title.setText("Student Schedules: ");
+                stat2Title.setText("Total Logs: ");
+                fetchStudentScheduleCount(email);
+                fetchTotalLogsCount(email);
+                // Show the labels and values for role 3
+                stat1Title.setVisibility(View.VISIBLE);
+                stat1Value.setVisibility(View.VISIBLE);
+                stat2Title.setVisibility(View.VISIBLE);
+                stat2Value.setVisibility(View.VISIBLE);
+            } else {
+                // Hide all statistics if the role number is invalid
+                Toast.makeText(getContext(), "Invalid role number", Toast.LENGTH_SHORT).show();
+                stat1Title.setVisibility(View.GONE);
+                stat1Value.setVisibility(View.GONE);
+                stat2Title.setVisibility(View.GONE);
+                stat2Value.setVisibility(View.GONE);
+            }
         } else {
+            // Hide all statistics if no email is found
             Toast.makeText(getContext(), "No email found in session", Toast.LENGTH_SHORT).show();
+            stat1Title.setVisibility(View.GONE);
+            stat1Value.setVisibility(View.GONE);
+            stat2Title.setVisibility(View.GONE);
+            stat2Value.setVisibility(View.GONE);
         }
 
         return view;
@@ -76,11 +118,11 @@ public class HomeFragment extends Fragment {
 
     private void fetchScheduleCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        Call<StudentCountResponse> call = apiService.getScheduleCountByEmail(email);
+        Call<ScheduleCountResponse> call = apiService.getScheduleCountByEmail(email);
 
-        call.enqueue(new Callback<StudentCountResponse>() {
+        call.enqueue(new Callback<ScheduleCountResponse>() {
             @Override
-            public void onResponse(Call<StudentCountResponse> call, Response<StudentCountResponse> response) {
+            public void onResponse(Call<ScheduleCountResponse> call, Response<ScheduleCountResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     stat2Value.setText(String.valueOf(response.body().getScheduleCount()));
                 } else {
@@ -89,7 +131,51 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<StudentCountResponse> call, Throwable t) {
+            public void onFailure(Call<ScheduleCountResponse> call, Throwable t) {
+                Log.e("HomeFragment", "Error: " + t.getMessage());
+                Toast.makeText(getContext(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void fetchStudentScheduleCount(String email) {
+        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+        Call<StudentScheduleCountResponse> call = apiService.getStudentScheduleCount(email);
+
+        call.enqueue(new Callback<StudentScheduleCountResponse>() {
+            @Override
+            public void onResponse(Call<StudentScheduleCountResponse> call, Response<StudentScheduleCountResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    stat1Value.setText(String.valueOf(response.body().getScheduleCount()));
+                } else {
+                    Toast.makeText(getContext(), "Failed to fetch schedule count", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<StudentScheduleCountResponse> call, Throwable t) {
+                Log.e("HomeFragment", "Error: " + t.getMessage());
+                Toast.makeText(getContext(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void fetchTotalLogsCount(String email) {
+        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+        Call<LogCountResponse> call = apiService.getTotalLogsCount(email);
+
+        call.enqueue(new Callback<LogCountResponse>() {
+            @Override
+            public void onResponse(Call<LogCountResponse> call, Response<LogCountResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    stat2Value.setText(String.valueOf(response.body().getLogCount()));
+                } else {
+                    Toast.makeText(getContext(), "Failed to fetch log count", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<LogCountResponse> call, Throwable t) {
                 Log.e("HomeFragment", "Error: " + t.getMessage());
                 Toast.makeText(getContext(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
             }
