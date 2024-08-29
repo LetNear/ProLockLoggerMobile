@@ -8,7 +8,6 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
-import retrofit2.http.Query;
 
 public interface ApiService {
     @GET("posts")
@@ -28,7 +27,18 @@ public interface ApiService {
 
     @GET("userInfo/{email}")
     Call<CheckEmailResponse> checkEmailRegistration(@Path("email") String email);
+
+    // Endpoint for student count
+    @GET("student-count/{email}")
+    Call<StudentCountResponse> getStudentCountByEmail(@Path("email") String email);
+
+    // Endpoint for instructor schedule count
+    @GET("instructor/schedule-count/{email}")
+    Call<StudentCountResponse> getScheduleCountByEmail(@Path("email") String email);
 }
+
+
+
 
 
 
