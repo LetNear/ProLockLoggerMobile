@@ -110,13 +110,14 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<CheckEmailResponse> call, Response<CheckEmailResponse> response) {
                 if (response.isSuccessful()) {
-                    // Check if response body is not null
                     if (response.body() != null) {
                         CheckEmailResponse checkEmailResponse = response.body();
-                        // Check if the email is present in the response, assuming email presence indicates registration
                         if (checkEmailResponse.getEmail() != null && !checkEmailResponse.getEmail().isEmpty()) {
                             // Email is registered, save the role_number to SharedPreferences
                             String roleNumber = checkEmailResponse.getRoleNumber();
+
+                            // Log the role_number for debugging purposes
+                            Log.d("LoginActivity", "Role Number: " + roleNumber);
 
                             SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
                             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -130,7 +131,6 @@ public class LoginActivity extends AppCompatActivity {
                             Toast.makeText(LoginActivity.this, "Email is not registered. Please sign up first.", Toast.LENGTH_LONG).show();
                         }
                     } else {
-                        // Response body is null
                         Log.e("LoginActivity", "Response body is null");
                         Toast.makeText(LoginActivity.this, "Unexpected error: Response body is null", Toast.LENGTH_SHORT).show();
                     }

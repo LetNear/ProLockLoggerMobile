@@ -3,7 +3,7 @@ package com.example.prolockloggerv1;
 public class CheckEmailResponse {
     private boolean registered;
     private String email;
-    private String roleNumber;  // Add this field
+    private String role_number;  // Add this field
 
     public boolean isRegistered() {
         return registered;
@@ -19,11 +19,11 @@ public class CheckEmailResponse {
 
     // Add this getter method for roleNumber
     public String getRoleNumber() {
-        return roleNumber;
+        return role_number;
     }
 
     // Add this setter method for roleNumber
     public void setRoleNumber(String roleNumber) {
-        this.roleNumber = roleNumber;
+        this.role_number = roleNumber;
     }
 }
