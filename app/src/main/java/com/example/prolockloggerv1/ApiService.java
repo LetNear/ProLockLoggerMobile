@@ -57,10 +57,11 @@ public interface ApiService {
     @GET("enrolled-courses/{email}")
     Call<List<LabSchedule>> getEnrolledCourses(@Path("email") String email);
 
+    // API call to open the door
     @POST("door/open")
-    Call<DoorControlResponse> openDoor();
+    Call<DoorControlResponse> openDoor(@Query("email") String email);
 
     // API call to close the door
     @POST("door/close")
-    Call<DoorControlResponse> closeDoor();
+    Call<DoorControlResponse> closeDoor(@Query("email") String email);
 }

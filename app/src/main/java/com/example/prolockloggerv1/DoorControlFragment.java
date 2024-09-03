@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -36,14 +35,18 @@ public class DoorControlFragment extends Fragment {
     }
 
     private void controlDoor(String action) {
-        // Assuming action is either "open" or "close"
+        // Replace with the actual email or fetch it from the appropriate source
+        String email = "bopenales@my.cspc.edu.ph";
         Call<DoorControlResponse> call;
+
+        // Determine which API call to make based on action
         if (action.equals("open")) {
-            call = apiService.openDoor();  // Define this in ApiService
+            call = apiService.openDoor(email);
         } else {
-            call = apiService.closeDoor(); // Define this in ApiService
+            call = apiService.closeDoor(email);
         }
 
+        // Enqueue the call
         call.enqueue(new Callback<DoorControlResponse>() {
             @Override
             public void onResponse(@NonNull Call<DoorControlResponse> call, @NonNull Response<DoorControlResponse> response) {
