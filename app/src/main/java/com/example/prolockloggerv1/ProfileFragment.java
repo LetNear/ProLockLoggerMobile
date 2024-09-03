@@ -413,12 +413,18 @@ public class ProfileFragment extends Fragment {
 
         builder.setPositiveButton("Enroll", (dialog, which) -> {
             String enteredPassword = passwordInput.getText().toString().trim();
-            if (enteredPassword.equals(schedule.getPassword())) {
-                // Placeholder for API integration - Enroll in the course using the password
-                enrollInCourse(schedule);
-            } else {
+
+            // Check if the user is a student (role_number == 3)
+
+
+            // Check if the entered password matches the course password
+            if (!enteredPassword.equals(schedule.getPassword())) {
                 Toast.makeText(getActivity(), "Incorrect password", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Proceed to enroll in the course
+            enrollInCourse(schedule);
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
@@ -426,18 +432,40 @@ public class ProfileFragment extends Fragment {
         builder.create().show();
     }
 
-    // Placeholder method for course enrollment API integration
+    // Enroll in a course using API call
     private void enrollInCourse(LabSchedule schedule) {
-        // API call to enroll in the course can be implemented here
-        // Example: apiService.enrollInCourse(schedule.getId(), ...);
+        String userEmail = sharedPreferences.getString("user_email", "");
 
-        // Placeholder response
-        Toast.makeText(getActivity(), "Enrolled successfully in " + schedule.getCourseName(), Toast.LENGTH_SHORT).show();
+        // Prepare the API call
+        Call<EnrollmentResponse> enrollCall = apiService.enrollStudent(userEmail, schedule.getId());
+
+        enrollCall.enqueue(new Callback<EnrollmentResponse>() {
+            @Override
+            public void onResponse(Call<EnrollmentResponse> call, Response<EnrollmentResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Enrollment successful
+                    Toast.makeText(getActivity(), response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                } else {
+                    // Enrollment failed
+                    String errorBody = "Failed to enroll: " + response.code();
+                    if (response.errorBody() != null) {
+                        try {
+                            errorBody += " - " + response.errorBody().string();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    Toast.makeText(getActivity(), errorBody, Toast.LENGTH_SHORT).show();
+                    Log.e("ProfileFragment", errorBody);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<EnrollmentResponse> call, Throwable t) {
+                Toast.makeText(getActivity(), "Failed to connect to the server: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e("ProfileFragment", "Enrollment failed: ", t);
+            }
+        });
     }
-
-
-
-
-
 }
 

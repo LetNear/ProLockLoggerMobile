@@ -48,6 +48,9 @@ public interface ApiService {
     @GET("/api/lab-schedules")
     Call<List<LabSchedule>> getLabSchedules();
 
+    @POST("enroll-student")
+    Call<EnrollmentResponse> enrollStudent(@Query("email") String email, @Query("course_id") int courseId);
+
     @GET("alternative-student-schedule/{email}")
     Call<List<Schedule>> getAlternativeSchedulesByEmail(@Path("email") String email);
 }

@@ -109,30 +109,33 @@ public class LoginActivity extends AppCompatActivity {
         call.enqueue(new Callback<CheckEmailResponse>() {
             @Override
             public void onResponse(Call<CheckEmailResponse> call, Response<CheckEmailResponse> response) {
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        CheckEmailResponse checkEmailResponse = response.body();
-                        if (checkEmailResponse.getEmail() != null && !checkEmailResponse.getEmail().isEmpty()) {
-                            // Email is registered, save the role_number to SharedPreferences
-                            String roleNumber = checkEmailResponse.getRoleNumber();
+                if (response.isSuccessful() && response.body() != null) {
+                    CheckEmailResponse checkEmailResponse = response.body();
 
-                            // Log the role_number for debugging purposes
-                            Log.d("LoginActivity", "Role Number: " + roleNumber);
+                    // Check if the response has a valid email registered
+                    if (checkEmailResponse.getEmail() != null && !checkEmailResponse.getEmail().isEmpty()) {
+                        // Email is registered, save the role_number to SharedPreferences
+                        String roleNumber = checkEmailResponse.getRoleNumber();
 
-                            SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
-                            SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putInt("role_number", Integer.parseInt(roleNumber));
-                            editor.apply();
+                        // Log the role_number for debugging purposes
+                        Log.d("LoginActivity", "Role Number: " + roleNumber);
 
-                            // Proceed with sign-in
-                            redirectToMainActivity();
-                        } else {
-                            // Email is not registered, show error message
-                            Toast.makeText(LoginActivity.this, "Email is not registered. Please sign up first.", Toast.LENGTH_LONG).show();
-                        }
+                        // Save role_number to SharedPreferences
+                        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putInt("role_number", Integer.parseInt(roleNumber));
+                        editor.apply();
+
+                        // Proceed with sign-in
+                        redirectToMainActivity();
                     } else {
-                        Log.e("LoginActivity", "Response body is null");
-                        Toast.makeText(LoginActivity.this, "Unexpected error: Response body is null", Toast.LENGTH_SHORT).show();
+                        // Email is not registered in the API database
+
+
+                        // Optional: Sign out the Google account if email is not registered
+                        mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
+                            // Notify user of sign-out completion, if necessary
+                        });
                     }
                 } else {
                     handleResponseError(response.code());
@@ -147,6 +150,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
+
     private void handleResponseError(int responseCode) {
         switch (responseCode) {
             case 400:
@@ -156,7 +160,7 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(LoginActivity.this, "Unauthorized: Access is denied due to invalid credentials.", Toast.LENGTH_SHORT).show();
                 break;
             case 404:
-                Toast.makeText(LoginActivity.this, "Not Found: The requested resource could not be found.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Not Found: Account not registered!.", Toast.LENGTH_SHORT).show();
                 break;
             case 500:
                 Toast.makeText(LoginActivity.this, "Server Error: The server encountered an error.", Toast.LENGTH_SHORT).show();
