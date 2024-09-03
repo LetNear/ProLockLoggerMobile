@@ -49,6 +49,10 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.profile:
                     replaceFragment(new ProfileFragment());
                     return true;
+                case R.id.fab:
+                    replaceFragment(new DoorControlFragment()); // Open Door Control Fragment
+                    return true;
+
 
                 default:
                     return false;

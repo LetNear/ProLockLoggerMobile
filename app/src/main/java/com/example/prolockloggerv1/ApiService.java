@@ -53,4 +53,14 @@ public interface ApiService {
 
     @GET("alternative-student-schedule/{email}")
     Call<List<Schedule>> getAlternativeSchedulesByEmail(@Path("email") String email);
+
+    @GET("enrolled-courses/{email}")
+    Call<List<LabSchedule>> getEnrolledCourses(@Path("email") String email);
+
+    @POST("door/open")
+    Call<DoorControlResponse> openDoor();
+
+    // API call to close the door
+    @POST("door/close")
+    Call<DoorControlResponse> closeDoor();
 }

@@ -13,8 +13,8 @@
 
     <item
         android:id="@+id/fab"
-        android:title=""
-        android:enabled="false" />
+        android:title="Open/Close Door"
+       android:icon="@drawable/ic_door" />
 
     <item
         android:id="@+id/attendance"
