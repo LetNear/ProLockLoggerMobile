@@ -1,12 +1,19 @@
 package com.example.prolockloggerv1;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Schedule {
     private int id;
-    private String subject_name;
-    private String day_of_the_week;
-    private String class_start;
-    private String class_end;
-    private int block_id;
+    @SerializedName("course_name")
+    private String courseName;  // Changed from subject_name to courseName
+    @SerializedName("day_of_the_week")
+    private String dayOfTheWeek;
+    @SerializedName("class_start")
+    private String classStart;
+    @SerializedName("class_end")
+    private String classEnd;
+    @SerializedName("block_id")
+    private int blockId;
     private Block block; // Block object
     private String year; // Year field
     private String instructor; // Instructor field
@@ -20,44 +27,44 @@ public class Schedule {
         this.id = id;
     }
 
-    public String getSubjectName() {
-        return subject_name;
+    public String getCourseName() {
+        return courseName; // Corrected getter for course name
     }
 
-    public void setSubjectName(String subject_name) {
-        this.subject_name = subject_name;
+    public void setCourseName(String courseName) {
+        this.courseName = courseName; // Corrected setter for course name
     }
 
     public String getDayOfTheWeek() {
-        return day_of_the_week;
+        return dayOfTheWeek;
     }
 
-    public void setDayOfTheWeek(String day_of_the_week) {
-        this.day_of_the_week = day_of_the_week;
+    public void setDayOfTheWeek(String dayOfTheWeek) {
+        this.dayOfTheWeek = dayOfTheWeek;
     }
 
     public String getClassStart() {
-        return class_start;
+        return classStart;
     }
 
-    public void setClassStart(String class_start) {
-        this.class_start = class_start;
+    public void setClassStart(String classStart) {
+        this.classStart = classStart;
     }
 
     public String getClassEnd() {
-        return class_end;
+        return classEnd;
     }
 
-    public void setClassEnd(String class_end) {
-        this.class_end = class_end;
+    public void setClassEnd(String classEnd) {
+        this.classEnd = classEnd;
     }
 
     public int getBlockId() {
-        return block_id;
+        return blockId;
     }
 
-    public void setBlockId(int block_id) {
-        this.block_id = block_id;
+    public void setBlockId(int blockId) {
+        this.blockId = blockId;
     }
 
     public Block getBlock() {
@@ -99,7 +106,13 @@ public class Schedule {
             this.block = block;
         }
 
+        // Getter and Setter for year
+        public String getYear() {
+            return year;
+        }
 
+        public void setYear(String year) {
+            this.year = year;
         }
     }
-
+}

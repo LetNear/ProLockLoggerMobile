@@ -44,4 +44,10 @@ public interface ApiService {
     // Endpoint for total logs count by email (role_number 3)
     @GET("total-logs-count")
     Call<LogCountResponse> getTotalLogsCount(@Query("email") String email);
+
+    @GET("/api/lab-schedules")
+    Call<List<LabSchedule>> getLabSchedules();
+
+    @GET("alternative-student-schedule/{email}")
+    Call<List<Schedule>> getAlternativeSchedulesByEmail(@Path("email") String email);
 }

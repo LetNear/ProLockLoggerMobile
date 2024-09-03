@@ -121,7 +121,7 @@ public class LoginActivity extends AppCompatActivity {
 
                             SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
                             SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putString("role_number", roleNumber);
+                            editor.putInt("role_number", Integer.parseInt(roleNumber));
                             editor.apply();
 
                             // Proceed with sign-in

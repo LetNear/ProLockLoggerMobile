@@ -1,16 +1,22 @@
 package com.example.prolockloggerv1;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.example.prolockloggerv1.databinding.FragmentProfileBinding;
@@ -20,6 +26,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 import retrofit2.Call;
@@ -50,6 +57,7 @@ public class ProfileFragment extends Fragment {
         if (sharedPreferences.contains("user_email")) {
             // User is signed in, show the profile view
             showUserProfileView();
+            loadLabSchedules();
         } else {
             // Redirect to LoginActivity if not signed in
             redirectToLogin();
@@ -348,7 +356,87 @@ public class ProfileFragment extends Fragment {
             }
         }
         return false;
+    }// Method to load available lab schedules into the ScrollView
+    private void loadLabSchedules() {
+        apiService.getLabSchedules().enqueue(new Callback<List<LabSchedule>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<LabSchedule>> call, @NonNull Response<List<LabSchedule>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<LabSchedule> labSchedules = response.body();
+                    displayLabSchedules(labSchedules);
+                } else {
+                    Log.e("ProfileFragment", "Failed to load lab schedules: " + response.code());
+                    Toast.makeText(getActivity(), "Failed to load lab schedules", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<LabSchedule>> call, @NonNull Throwable t) {
+                Log.e("ProfileFragment", "Failed to fetch lab schedules: " + t.getMessage());
+                Toast.makeText(getActivity(), "Error fetching lab schedules", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
+    // Method to display lab schedules in the ScrollView
+    private void displayLabSchedules(List<LabSchedule> labSchedules) {
+        LinearLayout coursesLayout = binding.coursesLayout;
+
+        for (LabSchedule schedule : labSchedules) {
+            TextView courseView = new TextView(getActivity());
+            courseView.setText(String.format("%s (%s) - %s to %s on %s",
+                    schedule.getCourseName(),
+                    schedule.getCourseCode(),
+                    schedule.getClassStart(),
+                    schedule.getClassEnd(),
+                    schedule.getDayOfTheWeek()));
+
+            courseView.setPadding(16, 16, 16, 16);
+            courseView.setTextSize(16f);
+//            courseView.setBackgroundResource(R.drawable.course_item_background);
+            courseView.setOnClickListener(view -> showPasswordDialog(schedule));
+
+            coursesLayout.addView(courseView);
+        }
+    }
+
+    // Show a dialog with a password input for enrolling in a course
+    private void showPasswordDialog(LabSchedule schedule) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Enroll in " + schedule.getCourseName());
+
+        final EditText passwordInput = new EditText(getActivity());
+        passwordInput.setHint("Enter password");
+        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        builder.setView(passwordInput);
+
+        builder.setPositiveButton("Enroll", (dialog, which) -> {
+            String enteredPassword = passwordInput.getText().toString().trim();
+            if (enteredPassword.equals(schedule.getPassword())) {
+                // Placeholder for API integration - Enroll in the course using the password
+                enrollInCourse(schedule);
+            } else {
+                Toast.makeText(getActivity(), "Incorrect password", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
+    }
+
+    // Placeholder method for course enrollment API integration
+    private void enrollInCourse(LabSchedule schedule) {
+        // API call to enroll in the course can be implemented here
+        // Example: apiService.enrollInCourse(schedule.getId(), ...);
+
+        // Placeholder response
+        Toast.makeText(getActivity(), "Enrolled successfully in " + schedule.getCourseName(), Toast.LENGTH_SHORT).show();
+    }
+
+
+
 
 
 }

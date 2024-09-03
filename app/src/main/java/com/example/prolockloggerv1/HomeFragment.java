@@ -38,7 +38,20 @@ public class HomeFragment extends Fragment {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getContext().MODE_PRIVATE);
         String userName = sharedPreferences.getString("user_name", "");
         String email = sharedPreferences.getString("user_email", "");
-        String roleNumber = sharedPreferences.getString("role_number", "");
+        int roleNumber;
+
+        // Use a default value if role_number is not present or invalid
+        try {
+            roleNumber = sharedPreferences.getInt("role_number", 2);  // Default to 2 if not set
+        } catch (ClassCastException e) {
+            // Handle the case where the stored value is not an integer
+            String roleNumberString = sharedPreferences.getString("role_number", "2");
+            try {
+                roleNumber = Integer.parseInt(roleNumberString);
+            } catch (NumberFormatException ex) {
+                roleNumber = 2; // Default to 2 if parsing fails
+            }
+        }
 
         // Update the welcome text
         if (!userName.isEmpty()) {
@@ -52,7 +65,7 @@ public class HomeFragment extends Fragment {
         stat2Value.setVisibility(View.GONE);
 
         if (!email.isEmpty()) {
-            if ("2".equals(roleNumber)) {
+            if (roleNumber == 2) {
                 // Role number 2: Fetch student and schedule counts
                 stat1Title.setText("Total Students: ");
                 stat2Title.setText("Total Schedules: ");
@@ -63,7 +76,7 @@ public class HomeFragment extends Fragment {
                 stat1Value.setVisibility(View.VISIBLE);
                 stat2Title.setVisibility(View.VISIBLE);
                 stat2Value.setVisibility(View.VISIBLE);
-            } else if ("3".equals(roleNumber)) {
+            } else if (roleNumber == 3) {
                 // Role number 3: Fetch student schedule count and total logs count
                 stat1Title.setText("Student Schedules: ");
                 stat2Title.setText("Total Logs: ");
@@ -93,6 +106,7 @@ public class HomeFragment extends Fragment {
 
         return view;
     }
+
 
     private void fetchStudentCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);

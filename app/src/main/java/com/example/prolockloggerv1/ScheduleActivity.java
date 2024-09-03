@@ -185,7 +185,7 @@ public class ScheduleActivity extends AppCompatActivity {
 
                 // Create and add the Course TextView
                 TextView course = new TextView(this);
-                course.setText(schedule.getSubjectName());
+                course.setText(schedule.getCourseName());
                 course.setPadding(8, 8, 8, 8);
                 course.setGravity(android.view.Gravity.CENTER);
                 course.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));

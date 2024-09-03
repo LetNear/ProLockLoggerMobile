@@ -13,4 +13,7 @@ public interface ScheduleApi {
 
     @GET("/api/lab-schedules/email/{email}")
     Call<List<Schedule>> getSchedulesByEmail(@Path("email") String email);
+
+    @GET("/student-schedule/{email}")
+    Call<List<Schedule>> getAlternativeSchedulesByEmail(@Path("email") String email);
 }
