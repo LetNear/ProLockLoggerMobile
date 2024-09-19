@@ -18,7 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,51 +119,54 @@ public class ScheduleFragment extends Fragment {
     };
 
     private void loadSchedules(int roleNumber, String userEmail) {
-        Call<List<Schedule>> call;
+        Call<ScheduleResponse> call;
+
+        // Log the email being used
+        Log.d("ScheduleFragment", "User Email: " + userEmail);
+
+        // Check roleNumber to decide which API to call
         if (roleNumber == 2) {
-            call = scheduleApi.getSchedulesByEmail(userEmail); // Initial schedule API
+            call = scheduleApi.getSchedulesByEmail(userEmail); // Main schedule API for students
+            Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/api/lab-schedules/email/" + userEmail);
         } else if (roleNumber == 3) {
-            call = scheduleApi.getAlternativeSchedulesByEmail(userEmail); // Alternative schedule API
+            call = scheduleApi.getAlternativeSchedulesByEmail(userEmail); // Alternative schedule API for instructors/admins
+            Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/student-schedule/" + userEmail);
         } else {
-            call = scheduleApi.getSchedulesByEmail(userEmail); // Fallback to default
+            call = scheduleApi.getSchedulesByEmail(userEmail);
+            Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/api/lab-schedules/email/" + userEmail);
         }
 
-        call.enqueue(new Callback<List<Schedule>>() {
+        // Make the API call
+        call.enqueue(new Callback<ScheduleResponse>() {
             @Override
-            public void onResponse(Call<List<Schedule>> call, Response<List<Schedule>> response) {
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        allSchedules = response.body();
-                        filteredSchedules.clear();
-                        filteredSchedules.addAll(allSchedules);
-                        Log.d("ScheduleFragment", "Schedules fetched: " + allSchedules.size());
-                        displayPage(currentPage);
-                    } else {
-                        Log.d("ScheduleFragment", "Empty response body.");
-                        Toast.makeText(getActivity(), "No schedules found.", Toast.LENGTH_SHORT).show();
-                    }
+            public void onResponse(Call<ScheduleResponse> call, Response<ScheduleResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ScheduleResponse scheduleResponse = response.body();
+                    allSchedules.clear();
+                    allSchedules.addAll(scheduleResponse.getSchedules()); // Fetch schedules from response
+
+                    // Now set filteredSchedules to be the same as allSchedules initially
+                    filteredSchedules.clear();
+                    filteredSchedules.addAll(allSchedules); // Initialize the filtered list
+
+                    Log.d("ScheduleFragment", "Schedules fetched: " + allSchedules.size());
+                    displayPage(currentPage);
                 } else {
-                    String errorBody = "";
-                    if (response.errorBody() != null) {
-                        try {
-                            errorBody = response.errorBody().string();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
                     Log.d("ScheduleFragment", "Failed to load schedules. Response code: " + response.code());
-                    Log.d("ScheduleFragment", "Response body: " + errorBody);
                     Toast.makeText(getActivity(), "No schedule found", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Schedule>> call, Throwable t) {
+            public void onFailure(Call<ScheduleResponse> call, Throwable t) {
                 Log.e("ScheduleFragment", "Error fetching data", t);
                 Toast.makeText(getActivity(), "An error occurred", Toast.LENGTH_SHORT).show();
             }
         });
     }
+
+
+
 
 
     private void performSearch() {
@@ -173,7 +175,7 @@ public class ScheduleFragment extends Fragment {
         filteredSchedules.clear();
         for (Schedule schedule : allSchedules) {
             boolean matches = false;
-            if (String.valueOf(schedule.getId()).toLowerCase().contains(query)) {
+            if (String.valueOf(schedule.getCourseCode()).toLowerCase().contains(query)) {
                 matches = true;
             } else if (schedule.getCourseName() != null && schedule.getCourseName().toLowerCase().contains(query)) {
                 matches = true;
@@ -183,7 +185,7 @@ public class ScheduleFragment extends Fragment {
                 matches = true;
             } else if (schedule.getClassEnd() != null && schedule.getClassEnd().toLowerCase().contains(query)) {
                 matches = true;
-            } else if (schedule.getBlock() != null && schedule.getBlock().getBlock().toLowerCase().contains(query)) {
+            } else if (schedule.getSpecificDate() != null && schedule.getSpecificDate().toLowerCase().contains(query)) {
                 matches = true;
             }
 
@@ -226,106 +228,72 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void displayPage(int page) {
-        // Clear existing rows (except the header)
+        // Clear existing rows (except the header row)
         tableLayout.removeViews(1, tableLayout.getChildCount() - 1);
 
-        if (allSchedules.isEmpty()) {
-            // If there are no schedules, display a message indicating no schedules
+        // Check if there are schedules to display
+        if (filteredSchedules.isEmpty()) {
+            // Display no schedules message
             TableRow row = new TableRow(requireContext());
-            row.setLayoutParams(new TableRow.LayoutParams(
-                    TableRow.LayoutParams.MATCH_PARENT,
-                    TableRow.LayoutParams.WRAP_CONTENT
-            ));
-
             TextView noDataTextView = new TextView(requireContext());
             noDataTextView.setText("No schedules yet!");
-            noDataTextView.setPadding(8, 8, 8, 8);
             noDataTextView.setGravity(View.TEXT_ALIGNMENT_CENTER);
-            noDataTextView.setLayoutParams(new TableRow.LayoutParams(
-                    TableRow.LayoutParams.MATCH_PARENT,
-                    TableRow.LayoutParams.WRAP_CONTENT
-            ));
-
+            noDataTextView.setPadding(12, 12, 12, 12); // Add padding
             row.addView(noDataTextView);
             tableLayout.addView(row);
-
-            // Disable page navigation buttons since there's no data
-            previousPageButton.setEnabled(false);
-            nextPageButton.setEnabled(false);
-
-            // Update the page indicator
-            pageIndicator.setText("Page 1");
         } else {
+            // Determine the range of items to show on this page
             int start = page * pageSize;
-            int end = Math.min(start + pageSize, allSchedules.size());
+            int end = Math.min(start + pageSize, filteredSchedules.size());
 
+            // Iterate over the schedules to display them
             for (int i = start; i < end; i++) {
-                Schedule schedule = allSchedules.get(i);
+                Schedule schedule = filteredSchedules.get(i);
 
                 TableRow row = new TableRow(requireContext());
                 row.setLayoutParams(new TableRow.LayoutParams(
                         TableRow.LayoutParams.MATCH_PARENT,
-                        TableRow.LayoutParams.WRAP_CONTENT
-                ));
+                        TableRow.LayoutParams.WRAP_CONTENT));
 
-                // Create and add the Schedule Id TextView
-                TextView id = new TextView(requireContext());
-                id.setText(String.valueOf(schedule.getId()));
-                id.setPadding(8, 8, 8, 8);
-                id.setGravity(View.TEXT_ALIGNMENT_CENTER); // Center text
-                id.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(id);
+                // Create and add the Course Code TextView
+                TextView courseCodeView = new TextView(requireContext());
+                courseCodeView.setText(schedule.getCourseCode());
+                courseCodeView.setPadding(12, 12, 12, 12);
+                courseCodeView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                courseCodeView.setMaxLines(1);
+                row.addView(courseCodeView);
 
-                // Create and add the Course TextView
-                TextView course = new TextView(requireContext());
-                course.setText(schedule.getCourseName());
-                course.setPadding(8, 8, 8, 8);
-                course.setGravity(View.TEXT_ALIGNMENT_CENTER); // Center text
-                course.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(course);
+                // Create and add the Course Name TextView
+                TextView courseNameView = new TextView(requireContext());
+                courseNameView.setText(schedule.getCourseName());
+                courseNameView.setPadding(12, 12, 12, 12);
+                courseNameView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2)); // Larger weight for this column
+                courseNameView.setMaxLines(1);
+                row.addView(courseNameView);
 
                 // Create and add the Time and Day TextView
-                TextView timeAndDay = new TextView(requireContext());
-                timeAndDay.setText(schedule.getDayOfTheWeek() + " " + schedule.getClassStart() + " - " + schedule.getClassEnd());
-                timeAndDay.setPadding(8, 8, 8, 8);
-                timeAndDay.setGravity(View.TEXT_ALIGNMENT_CENTER); // Center text
-                timeAndDay.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(timeAndDay);
+                TextView timeAndDayView = new TextView(requireContext());
+                timeAndDayView.setText(schedule.getDayOfTheWeek() + "\n" + schedule.getClassStart() + " - " + schedule.getClassEnd());
+                timeAndDayView.setPadding(12, 12, 12, 12);
+                timeAndDayView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2));
+                timeAndDayView.setMaxLines(2); // Allow wrapping to two lines if necessary
+                row.addView(timeAndDayView);
 
-                // Create and add the Block TextView
-                TextView block = new TextView(requireContext());
-                block.setText(getBlockLetter(schedule.getBlockId())); // Use the method to convert block ID to letter
-                block.setPadding(8, 8, 8, 8);
-                block.setGravity(View.TEXT_ALIGNMENT_CENTER); // Center text
-                block.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                row.addView(block);
+                // Create and add the Block and Year TextView (combined as "1-A" format)
+                TextView blockYearView = new TextView(requireContext());
+                blockYearView.setText(schedule.getBlockYear()); // Call the combined method
+                blockYearView.setPadding(12, 12, 12, 12);
+                blockYearView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
+                blockYearView.setMaxLines(1);
+                row.addView(blockYearView);
 
                 // Add the row to the table layout
                 tableLayout.addView(row);
             }
 
-            // Calculate remaining rows needed to fill the space
-            int remainingRows = pageSize - (end - start);
-
-            // Add filler rows to take up remaining space
-            for (int i = 0; i < remainingRows; i++) {
-                TableRow fillerRow = new TableRow(requireContext());
-                fillerRow.setLayoutParams(new TableRow.LayoutParams(
-                        TableRow.LayoutParams.MATCH_PARENT,
-                        0, 1f // Set the weight to 1 to evenly distribute space
-                ));
-
-                // Add empty or invisible TextViews to the filler row
-                TextView emptyView = new TextView(requireContext());
-                emptyView.setText("");
-                fillerRow.addView(emptyView);
-
-                tableLayout.addView(fillerRow);
-            }
-
-            // Handle button visibility
+            // Handle the visibility of navigation buttons
             previousPageButton.setEnabled(currentPage > 0);
-            nextPageButton.setEnabled(end < allSchedules.size());
+            nextPageButton.setEnabled(end < filteredSchedules.size());
 
             // Update the page indicator
             pageIndicator.setText(String.format("Page %d", currentPage + 1));

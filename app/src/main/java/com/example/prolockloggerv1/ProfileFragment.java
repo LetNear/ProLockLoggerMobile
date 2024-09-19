@@ -164,16 +164,19 @@ public class ProfileFragment extends Fragment {
                             SimpleDateFormat apiDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                             SimpleDateFormat displayDateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
+                            // Parse the date and display it
                             Calendar calendar = Calendar.getInstance();
                             calendar.setTime(apiDateFormat.parse(userDetails.getDate_of_birth()));
                             String formattedDate = displayDateFormat.format(calendar.getTime());
 
                             binding.dateOfBirthEditText.setText(formattedDate);
                         } catch (Exception e) {
+                            // If there's an issue with parsing the date, set a default message or handle it gracefully
                             e.printStackTrace();
-                            binding.dateOfBirthEditText.setText("Invalid date format");
+                            binding.dateOfBirthEditText.setText("Enter date");
                         }
 
+                        // Other user details loading
                         binding.firstNameEditText.setText(userDetails.getFirst_name());
                         binding.middleNameEditText.setText(userDetails.getMiddle_name());
                         binding.lastNameEditText.setText(userDetails.getLast_name());
@@ -215,6 +218,7 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
 
 
 
@@ -358,25 +362,36 @@ public class ProfileFragment extends Fragment {
         return false;
     }// Method to load available lab schedules into the ScrollView
     private void loadLabSchedules() {
-        apiService.getLabSchedules().enqueue(new Callback<List<LabSchedule>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<LabSchedule>> call, @NonNull Response<List<LabSchedule>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<LabSchedule> labSchedules = response.body();
-                    displayLabSchedules(labSchedules);
-                } else {
-                    Log.e("ProfileFragment", "Failed to load lab schedules: " + response.code());
-                    Toast.makeText(getActivity(), "Failed to load lab schedules", Toast.LENGTH_SHORT).show();
-                }
-            }
+        int roleNumber = sharedPreferences.getInt("role_number", -1);  // Fetch role number from shared preferences
 
-            @Override
-            public void onFailure(@NonNull Call<List<LabSchedule>> call, @NonNull Throwable t) {
-                Log.e("ProfileFragment", "Failed to fetch lab schedules: " + t.getMessage());
-                Toast.makeText(getActivity(), "Error fetching lab schedules", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Check if the user is a student (role_number == 3)
+        if (roleNumber == 3) {
+            // User is a student, proceed with loading lab schedules
+            apiService.getLabSchedules().enqueue(new Callback<List<LabSchedule>>() {
+                @Override
+                public void onResponse(@NonNull Call<List<LabSchedule>> call, @NonNull Response<List<LabSchedule>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        List<LabSchedule> labSchedules = response.body();
+                        displayLabSchedules(labSchedules);
+                    } else {
+                        Log.e("ProfileFragment", "Failed to load lab schedules: " + response.code());
+                        Toast.makeText(getActivity(), "Failed to load lab schedules", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<List<LabSchedule>> call, @NonNull Throwable t) {
+                    Log.e("ProfileFragment", "Failed to fetch lab schedules: " + t.getMessage());
+                    Toast.makeText(getActivity(), "Error fetching lab schedules", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            // User is not a student, hide the courses layout or show a message
+            binding.coursesLayout.setVisibility(View.GONE);  // Hide courses layout
+//            Toast.makeText(getActivity(), "No courses available for your role.", Toast.LENGTH_SHORT).show();
+        }
     }
+
 
     // Method to display lab schedules in the ScrollView
     private void displayLabSchedules(List<LabSchedule> labSchedules) {

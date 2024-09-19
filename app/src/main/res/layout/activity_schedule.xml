@@ -69,7 +69,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Schedule Id"
+                    android:text="Course Code"
                     android:padding="8dp"
                     android:textStyle="bold"/>
                 <TextView
