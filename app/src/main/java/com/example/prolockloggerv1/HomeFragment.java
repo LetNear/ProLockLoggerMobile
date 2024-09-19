@@ -116,6 +116,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onResponse(Call<StudentCountResponse> call, Response<StudentCountResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    // Ensure you are using the correct method to get the student count
                     stat1Value.setText(String.valueOf(response.body().getStudentCount()));
                 } else {
                     Toast.makeText(getContext(), "Failed to fetch student count", Toast.LENGTH_SHORT).show();
@@ -130,6 +131,7 @@ public class HomeFragment extends Fragment {
         });
     }
 
+
     private void fetchScheduleCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         Call<ScheduleCountResponse> call = apiService.getScheduleCountByEmail(email);
@@ -138,19 +140,31 @@ public class HomeFragment extends Fragment {
             @Override
             public void onResponse(Call<ScheduleCountResponse> call, Response<ScheduleCountResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    stat2Value.setText(String.valueOf(response.body().getScheduleCount()));
+                    ScheduleCountResponse scheduleResponse = response.body();
+
+                    // Ensure the schedule count is not null
+                    if (scheduleResponse.getScheduleCount() != null) {
+                        stat2Value.setText(String.valueOf(scheduleResponse.getScheduleCount()));
+                        Log.i("HomeFragment", "Instructor: " + scheduleResponse.getInstructor() +
+                                ", Schedule Count: " + scheduleResponse.getScheduleCount());
+                    } else {
+                        Log.e("HomeFragment", "Error: Schedule count is null");
+                        Toast.makeText(getContext(), "Invalid schedule count received", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
+                    Log.e("HomeFragment", "Error: Response unsuccessful or body is null");
                     Toast.makeText(getContext(), "Failed to fetch schedule count", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<ScheduleCountResponse> call, Throwable t) {
-                Log.e("HomeFragment", "Error: " + t.getMessage());
+                Log.e("HomeFragment", "Error: " + t.getMessage(), t);
                 Toast.makeText(getContext(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
             }
         });
     }
+
 
     private void fetchStudentScheduleCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);

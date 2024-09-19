@@ -1,47 +1,27 @@
 package com.example.prolockloggerv1;
 
-import java.util.List;
+import com.google.gson.annotations.SerializedName;
 
 public class ScheduleCountResponse {
-    private List<Schedule> data;  // List to hold Schedule objects
-    private int total;            // Total number of schedules (if available)
-    private int totalPages;
-    private int scheduleCount; // Total number of pages (if available)
+    @SerializedName("instructor")
+    private String instructor;
 
-    // Getter for schedules
-    public List<Schedule> getData() {
-        return data;
+    @SerializedName("email")
+    private String email;
+
+    @SerializedName("schedule_count")
+    private Integer scheduleCount;
+
+    // Getters
+    public String getInstructor() {
+        return instructor;
     }
 
-    // Setter for schedules
-    public void setData(List<Schedule> data) {
-        this.data = data;
+    public String getEmail() {
+        return email;
     }
 
-    // Getter for total items
-    public int getTotal() {
-        return total;
-    }
-
-    // Setter for total items
-    public void setTotal(int total) {
-        this.total = total;
-    }
-
-    // Getter for total pages
-    public int getTotalPages() {
-        return totalPages;
-    }
-
-    // Setter for total pages
-    public void setTotalPages(int totalPages) {
-        this.totalPages = totalPages;
-    }
-    public int getScheduleCount() {
+    public Integer getScheduleCount() {
         return scheduleCount;
-    }
-
-    public void setScheduleCount(int scheduleCount) {
-        this.scheduleCount = scheduleCount;
     }
 }
