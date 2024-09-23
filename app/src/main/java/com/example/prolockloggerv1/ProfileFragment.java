@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -149,11 +150,12 @@ public class ProfileFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Edit Course: " + course.getCourseName());
 
-        // Inflate the dialog with a custom layout containing two EditText fields
+        // Inflate the dialog with a custom layout containing EditText fields and the eye icon
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View dialogView = inflater.inflate(R.layout.dialog_edit_course, null);
         EditText courseDescriptionEditText = dialogView.findViewById(R.id.course_description_edit_text);
         EditText schedulePasswordEditText = dialogView.findViewById(R.id.schedule_password_edit_text);
+        ImageView eyeIcon = dialogView.findViewById(R.id.eye_icon);
 
         // Set initial values
         courseDescriptionEditText.setText(course.getCourseDescription());
@@ -162,7 +164,21 @@ public class ProfileFragment extends Fragment {
         // Disable the password field if the course has no schedule
         if (course.getYear().equals("N/A") && course.getBlock().equals("N/A")) {
             schedulePasswordEditText.setEnabled(false);
+            eyeIcon.setVisibility(View.GONE); // Hide the eye icon if password input is disabled
         }
+
+        // Add functionality to toggle password visibility
+        eyeIcon.setOnClickListener(v -> {
+            if (schedulePasswordEditText.getInputType() == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
+                schedulePasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                eyeIcon.setImageResource(R.drawable.baseline_remove_red_eye_24);
+            } else {
+                schedulePasswordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                eyeIcon.setImageResource(R.drawable.baseline_remove_red_eye_24);
+            }
+            // To ensure the cursor is at the end of the text after toggling
+            schedulePasswordEditText.setSelection(schedulePasswordEditText.getText().length());
+        });
 
         builder.setView(dialogView);
 
@@ -174,6 +190,7 @@ public class ProfileFragment extends Fragment {
             // Call API to update course details
             updateCourseDetails(course, updatedDescription, updatedPassword);
         });
+
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         builder.create().show();

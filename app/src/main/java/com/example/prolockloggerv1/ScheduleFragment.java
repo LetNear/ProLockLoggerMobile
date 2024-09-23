@@ -171,33 +171,44 @@ public class ScheduleFragment extends Fragment {
 
 
     private void performSearch() {
-        String query = searchBar.getText().toString().toLowerCase();
+        String query = searchBar.getText().toString().trim().toLowerCase();  // Trim the input and convert to lower case
+
+        // If the query is empty, reset the filtered list to show all schedules
+        if (query.isEmpty()) {
+            filteredSchedules.clear();
+            filteredSchedules.addAll(allSchedules);
+            displayPage(currentPage);
+            return;
+        }
 
         filteredSchedules.clear();
-        for (Schedule schedule : allSchedules) {
-            boolean matches = false;
-            if (String.valueOf(schedule.getCourseCode()).toLowerCase().contains(query)) {
-                matches = true;
-            } else if (schedule.getCourseName() != null && schedule.getCourseName().toLowerCase().contains(query)) {
-                matches = true;
-            } else if (schedule.getDayOfTheWeek() != null && schedule.getDayOfTheWeek().toLowerCase().contains(query)) {
-                matches = true;
-            } else if (schedule.getClassStart() != null && schedule.getClassStart().toLowerCase().contains(query)) {
-                matches = true;
-            } else if (schedule.getClassEnd() != null && schedule.getClassEnd().toLowerCase().contains(query)) {
-                matches = true;
-            } else if (schedule.getSpecificDate() != null && schedule.getSpecificDate().toLowerCase().contains(query)) {
-                matches = true;
-            }
 
-            if (matches) {
+        for (Schedule schedule : allSchedules) {
+            if (matchesSearchQuery(schedule, query)) {
                 filteredSchedules.add(schedule);
             }
         }
 
+        // Reset to the first page after search
         currentPage = 0;
         displayPage(currentPage);
     }
+
+    // Helper method to check if a schedule matches the query
+    private boolean matchesSearchQuery(Schedule schedule, String query) {
+        return containsIgnoreCase(schedule.getCourseCode(), query)
+                || containsIgnoreCase(schedule.getCourseName(), query)
+                || containsIgnoreCase(schedule.getDayOfTheWeek(), query)
+                || containsIgnoreCase(schedule.getClassStart(), query)
+                || containsIgnoreCase(schedule.getClassEnd(), query)
+                || containsIgnoreCase(schedule.getSpecificDate(), query);
+    }
+
+    // Utility method to safely check if a string contains the query (ignores null and case)
+    private boolean containsIgnoreCase(String source, String query) {
+        return source != null && source.toLowerCase().contains(query);
+    }
+
 
     private void displayNotSignedInMessage() {
         if (tableLayout.getChildCount() > 1) {
