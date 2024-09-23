@@ -53,6 +53,9 @@ public class ScheduleFragment extends Fragment {
         String userEmail = sharedPreferences.getString("user_email", "");
         int roleNumber = sharedPreferences.getInt("role_number", 2); // Ensure role_number is an integer
 
+
+
+
         userNameTextView = rootView.findViewById(R.id.user_name);
         userNameTextView.setText("Welcome, " + userName);
 
@@ -127,12 +130,15 @@ public class ScheduleFragment extends Fragment {
 
         // Check roleNumber to decide which API to call
         if (roleNumber == 2) {
-            call = scheduleApi.getSchedulesByEmail(userEmail); // Main schedule API for students
+            // Existing API for students
+            call = scheduleApi.getSchedulesByEmail(userEmail);
             Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/api/lab-schedules/email/" + userEmail);
         } else if (roleNumber == 3) {
-            call = scheduleApi.getAlternativeSchedulesByEmail(userEmail); // Alternative schedule API for instructors/admins
-            Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/student-schedule/" + userEmail);
+            // New API for instructors
+            call = scheduleApi.getStudentScheduleByEmail(userEmail); // Change this to your correct method
+            Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/api/student/schedule-details?email=" + userEmail);
         } else {
+            // Default to the original student API
             call = scheduleApi.getSchedulesByEmail(userEmail);
             Log.d("ScheduleFragment", "Calling API: https://prolocklogger.pro/api/lab-schedules/email/" + userEmail);
         }
@@ -243,6 +249,10 @@ public class ScheduleFragment extends Fragment {
         // Clear existing rows (except the header row)
         tableLayout.removeViews(1, tableLayout.getChildCount() - 1);
 
+        // Get role number from shared preferences
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
+        int roleNumber = sharedPreferences.getInt("role_number", 2);
+
         // Check if there are schedules to display
         if (filteredSchedules.isEmpty()) {
             // Display no schedules message
@@ -268,7 +278,7 @@ public class ScheduleFragment extends Fragment {
                         TableRow.LayoutParams.MATCH_PARENT,
                         TableRow.LayoutParams.WRAP_CONTENT));
 
-// Course Code
+                // Course Code
                 TextView courseCodeView = new TextView(requireContext());
                 courseCodeView.setText(schedule.getCourseCode());
                 courseCodeView.setPadding(12, 12, 12, 12); // Padding
@@ -276,7 +286,7 @@ public class ScheduleFragment extends Fragment {
                 courseCodeView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2f));
                 row.addView(courseCodeView);
 
-// Course Name
+                // Course Name
                 TextView courseNameView = new TextView(requireContext());
                 courseNameView.setText(schedule.getCourseName());
                 courseNameView.setPadding(12, 12, 12, 12); // Padding
@@ -284,7 +294,7 @@ public class ScheduleFragment extends Fragment {
                 courseNameView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 3f));
                 row.addView(courseNameView);
 
-// Time and Day
+                // Time and Day
                 TextView timeAndDayView = new TextView(requireContext());
                 timeAndDayView.setText(schedule.getDayOfTheWeek() + "\n" + schedule.getClassStart() + " - " + schedule.getClassEnd());
                 timeAndDayView.setPadding(12, 12, 12, 12); // Padding
@@ -292,17 +302,18 @@ public class ScheduleFragment extends Fragment {
                 timeAndDayView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 3f));
                 row.addView(timeAndDayView);
 
-// Block
-                TextView blockView = new TextView(requireContext());
-                blockView.setText(schedule.getBlockYear());
-                blockView.setPadding(12, 12, 12, 12); // Padding
-                blockView.setGravity(Gravity.CENTER); // Center the text
-                blockView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
-                row.addView(blockView);
+                // Conditionally add Block column only for role_number == 2
+                if (roleNumber == 2) {
+                    TextView blockView = new TextView(requireContext());
+                    blockView.setText(schedule.getBlockYear());
+                    blockView.setPadding(12, 12, 12, 12); // Padding
+                    blockView.setGravity(Gravity.CENTER); // Center the text
+                    blockView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+                    row.addView(blockView);
+                }
 
-// Add the row to the table layout
+                // Add the row to the table layout
                 tableLayout.addView(row);
-
             }
 
             // Handle the visibility of navigation buttons
@@ -313,6 +324,7 @@ public class ScheduleFragment extends Fragment {
             pageIndicator.setText(String.format("Page %d", currentPage + 1));
         }
     }
+
 
 
 
