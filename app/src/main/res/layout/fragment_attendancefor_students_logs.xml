@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/user_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Instructor Name"
+        android:textSize="20sp"
+        android:layout_gravity="center_horizontal"
+        android:paddingBottom="16dp"
+        android:textColor="#000" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <TableLayout
+            android:id="@+id/tableLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="1"
+            android:layout_marginBottom="12dp">
+
+            <TableRow android:background="#f0f0f0">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Student Name"
+                    android:padding="16dp"
+                    android:gravity="center"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Course"
+                    android:padding="16dp"
+                    android:gravity="center"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="3"
+                android:text="Time In - Time Out"
+                android:padding="16dp"
+                android:gravity="center"
+                android:textStyle="bold" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.5"
+                    android:text="Status"
+                    android:padding="16dp"
+                    android:gravity="center"
+                    android:textStyle="bold" />
+            </TableRow>
+
+
+        </TableLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingVertical="12dp"
+        android:layout_marginBottom="87dp">
+
+        <Button
+            android:id="@+id/previousPageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PREVIOUS" />
+
+        <TextView
+            android:id="@+id/pageIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Page 1"
+            android:paddingHorizontal="16dp" />
+
+        <Button
+            android:id="@+id/nextPageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NEXT" />
+    </LinearLayout>
+
+</LinearLayout>

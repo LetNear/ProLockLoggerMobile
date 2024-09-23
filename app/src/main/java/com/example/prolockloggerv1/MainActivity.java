@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.fab:
                     replaceFragment(new DoorControlFragment()); // Open Door Control Fragment
                     return true;
+                case R.id.attendance:
+                    replaceFragment(new AttendanceforStudentsLogsFragment());
+                    return true;
 
 
                 default:
