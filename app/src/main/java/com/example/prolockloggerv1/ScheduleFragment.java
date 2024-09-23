@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -250,45 +251,47 @@ public class ScheduleFragment extends Fragment {
             for (int i = start; i < end; i++) {
                 Schedule schedule = filteredSchedules.get(i);
 
+                // Adding a dynamic row in your Java code for each schedule item
                 TableRow row = new TableRow(requireContext());
                 row.setLayoutParams(new TableRow.LayoutParams(
                         TableRow.LayoutParams.MATCH_PARENT,
                         TableRow.LayoutParams.WRAP_CONTENT));
 
-                // Create and add the Course Code TextView
+// Course Code
                 TextView courseCodeView = new TextView(requireContext());
                 courseCodeView.setText(schedule.getCourseCode());
-                courseCodeView.setPadding(12, 12, 12, 12);
-                courseCodeView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                courseCodeView.setMaxLines(1);
+                courseCodeView.setPadding(12, 12, 12, 12); // Padding
+                courseCodeView.setGravity(Gravity.CENTER); // Center the text
+                courseCodeView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2f));
                 row.addView(courseCodeView);
 
-                // Create and add the Course Name TextView
+// Course Name
                 TextView courseNameView = new TextView(requireContext());
                 courseNameView.setText(schedule.getCourseName());
-                courseNameView.setPadding(12, 12, 12, 12);
-                courseNameView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2)); // Larger weight for this column
-                courseNameView.setMaxLines(1);
+                courseNameView.setPadding(12, 12, 12, 12); // Padding
+                courseNameView.setGravity(Gravity.CENTER); // Center the text
+                courseNameView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 3f));
                 row.addView(courseNameView);
 
-                // Create and add the Time and Day TextView
+// Time and Day
                 TextView timeAndDayView = new TextView(requireContext());
                 timeAndDayView.setText(schedule.getDayOfTheWeek() + "\n" + schedule.getClassStart() + " - " + schedule.getClassEnd());
-                timeAndDayView.setPadding(12, 12, 12, 12);
-                timeAndDayView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 2));
-                timeAndDayView.setMaxLines(2); // Allow wrapping to two lines if necessary
+                timeAndDayView.setPadding(12, 12, 12, 12); // Padding
+                timeAndDayView.setGravity(Gravity.CENTER); // Center the text
+                timeAndDayView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 3f));
                 row.addView(timeAndDayView);
 
-                // Create and add the Block and Year TextView (combined as "1-A" format)
-                TextView blockYearView = new TextView(requireContext());
-                blockYearView.setText(schedule.getBlockYear()); // Call the combined method
-                blockYearView.setPadding(12, 12, 12, 12);
-                blockYearView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1));
-                blockYearView.setMaxLines(1);
-                row.addView(blockYearView);
+// Block
+                TextView blockView = new TextView(requireContext());
+                blockView.setText(schedule.getBlockYear());
+                blockView.setPadding(12, 12, 12, 12); // Padding
+                blockView.setGravity(Gravity.CENTER); // Center the text
+                blockView.setLayoutParams(new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+                row.addView(blockView);
 
-                // Add the row to the table layout
+// Add the row to the table layout
                 tableLayout.addView(row);
+
             }
 
             // Handle the visibility of navigation buttons

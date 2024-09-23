@@ -64,4 +64,10 @@ public interface ApiService {
     // API call to close the door
     @POST("door/close")
     Call<DoorControlResponse> closeDoor(@Query("email") String email);
+
+    @GET("courses/details")
+    Call<CourseDetailsResponse> getCourseDetails(@Query("email") String email);
+
+    @POST("courses/update")
+    Call<Void> updateCourseDetails(@Body CourseUpdateRequest request);
 }

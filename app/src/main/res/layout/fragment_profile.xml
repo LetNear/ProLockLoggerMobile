@@ -156,6 +156,26 @@
             android:elevation="4dp" />
     </LinearLayout>
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/courseDetailsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:background="@drawable/profile_background"
+            android:elevation="4dp">
+
+            <!-- Dynamically added course items will appear here -->
+
+        </LinearLayout>
+    </ScrollView>
+
     <!-- Scroll View for Courses -->
     <ScrollView
         android:id="@+id/courses_scroll_view"
@@ -177,5 +197,7 @@
 
         </LinearLayout>
     </ScrollView>
+
+
 
 </LinearLayout>

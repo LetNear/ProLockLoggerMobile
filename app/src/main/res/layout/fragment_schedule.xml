@@ -5,16 +5,18 @@
     android:orientation="vertical"
     android:padding="12dp">
 
+    <!-- Username Display -->
     <TextView
         android:id="@+id/user_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome John Doe!"
+        android:text="Welcome, Boyet Peñales"
         android:textSize="20sp"
         android:layout_gravity="center_horizontal"
         android:paddingBottom="16dp"
         android:textColor="#000"/>
 
+    <!-- Search Bar with Search Button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,15 +31,18 @@
             android:layout_weight="1"
             android:hint="Search"
             android:padding="8dp"
-            />
+            android:gravity="center_vertical"
+            android:background="@android:drawable/editbox_background"/>
 
         <Button
             android:id="@+id/searchButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Search" />
+            android:text="SEARCH"
+            android:padding="10dp" />
     </LinearLayout>
 
+    <!-- Scrollable Table Layout for Schedule -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -51,40 +56,53 @@
             android:stretchColumns="1"
             android:layout_marginBottom="12dp">
 
-            <TableRow android:background="#f0f0f0">
+            <!-- Table Header -->
+            <TableRow
+                android:background="#f0f0f0"
+                android:gravity="center">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="2"
                     android:text="Course Code"
-                    android:paddingVertical="8dp"
+                    android:padding="12dp"
+                    android:gravity="center"
                     android:textStyle="bold"/>
+
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="3"
                     android:text="Course"
-                    android:paddingVertical="8dp"
+                    android:padding="12dp"
+                    android:gravity="center"
                     android:textStyle="bold"/>
+
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="3"
                     android:text="Time and Day"
-                    android:paddingVertical="8dp"
+                    android:padding="12dp"
+                    android:gravity="center"
                     android:textStyle="bold"/>
+
+                <!-- Increase the layout weight for the Block column -->
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Block"
-                    android:paddingVertical="8dp"
-                    android:textStyle="bold"/>
+                    android:layout_weight="2"
+                android:text="Block"
+                android:padding="12dp"
+                android:gravity="center"
+                android:textStyle="bold"/>
             </TableRow>
 
+            <!-- Dynamic rows will be inserted here -->
         </TableLayout>
     </ScrollView>
 
+    <!-- Pagination Controls -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -97,20 +115,24 @@
             android:id="@+id/previousPageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PREVIOUS"/>
+            android:text="PREVIOUS"
+            android:padding="10dp"/>
 
         <TextView
             android:id="@+id/pageIndicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Page 1"
-            android:paddingHorizontal="16dp"/>
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:gravity="center"/>
 
         <Button
             android:id="@+id/nextPageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NEXT"/>
+            android:text="NEXT"
+            android:padding="10dp"/>
     </LinearLayout>
 
 </LinearLayout>

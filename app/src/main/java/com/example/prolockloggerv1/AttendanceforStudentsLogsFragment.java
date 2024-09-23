@@ -35,8 +35,8 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
     private List<AttendanceResponse.AttendanceLog> allLogs;
     private List<AttendanceResponse.AttendanceLog> filteredLogs;
     private int currentPage = 0;
-    private int pageSize = 5;
-    private static final int REFRESH_INTERVAL_MS = 5000;
+    private int pageSize = 11;
+    private static final int REFRESH_INTERVAL_MS = 3000; // Refresh every 3 seconds
     private Handler handler = new Handler();
     private AttendanceApi attendanceApi;
 
@@ -67,8 +67,8 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
                 .build();
         attendanceApi = retrofit.create(AttendanceApi.class);
 
-        // Load logs based on the instructor's email
-        handler.post(() -> loadAttendanceLogs(userEmail));
+        // Start refreshing data at 3-second intervals
+        handler.post(refreshRunnable);
 
         nextPageButton.setOnClickListener(v -> {
             if (currentPage < getMaxPage()) {
@@ -90,16 +90,17 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        handler.removeCallbacks(refreshRunnable);
+        handler.removeCallbacks(refreshRunnable); // Stop refreshing when fragment is destroyed
     }
 
-    private Runnable refreshRunnable = new Runnable() {
+    // Runnable to refresh the data every 3 seconds
+    private final Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
             SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
             String userEmail = sharedPreferences.getString("user_email", "");
-            loadAttendanceLogs(userEmail);
-            handler.postDelayed(this, REFRESH_INTERVAL_MS);
+            loadAttendanceLogs(userEmail); // Fetch the latest data
+            handler.postDelayed(this, REFRESH_INTERVAL_MS); // Schedule the next refresh
         }
     };
 
@@ -194,7 +195,6 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
             pageIndicator.setText(String.format("Page %d", currentPage + 1));
         }
     }
-
 
     private int getMaxPage() {
         return (int) Math.ceil((double) filteredLogs.size() / pageSize) - 1;

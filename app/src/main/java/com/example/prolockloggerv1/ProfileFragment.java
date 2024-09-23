@@ -49,15 +49,18 @@ public class ProfileFragment extends Fragment {
         // Initialize SharedPreferences
         sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
 
-        // Set up the Spinner for gender
-        setUpGenderSpinner();
-        setUpDateOfBirthPicker();
-
         // Check if user is signed in
         if (sharedPreferences.contains("user_email")) {
             // User is signed in, show the profile view
             showUserProfileView();
-            loadLabSchedules();
+
+            // Check user's role and load course details if the user is an instructor (role_number == 2)
+            int roleNumber = sharedPreferences.getInt("role_number", -1);
+            if (roleNumber == 2) {
+                loadAndDisplayCourseDetails(); // Load course details for instructors
+            }
+
+            loadLabSchedules();  // You may still load schedules based on your role logic
         } else {
             // Redirect to LoginActivity if not signed in
             redirectToLogin();
@@ -67,6 +70,140 @@ public class ProfileFragment extends Fragment {
         binding.logoutButton.setOnClickListener(view -> logout());
 
         return binding.getRoot();
+    }
+
+    // Load and display course details (only for instructors)
+    // Load and display course details (only for instructors)
+    private void loadAndDisplayCourseDetails() {
+        String userEmail = sharedPreferences.getString("user_email", "");
+
+        // Log the email being passed to the API
+        Log.d("ProfileFragment", "Email being sent to API: " + userEmail);
+
+        apiService.getCourseDetails(userEmail).enqueue(new Callback<CourseDetailsResponse>() {
+            @Override
+            public void onResponse(Call<CourseDetailsResponse> call, Response<CourseDetailsResponse> response) {
+                if (response.isSuccessful()) {
+                    // Log the raw response body to see what is returned
+                    try {
+                        Log.d("ProfileFragment", "Raw response: " + response.body().toString());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    CourseDetailsResponse courseDetailsResponse = response.body();
+                    if (courseDetailsResponse != null) {
+                        List<CourseDetails> courseDetailsList = courseDetailsResponse.getCourseDetails();
+                        if (courseDetailsList != null && !courseDetailsList.isEmpty()) {
+                            displayCourseDetails(courseDetailsList);
+                        } else {
+                            Toast.makeText(getActivity(), "No course details available", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getActivity(), "Failed to parse course details", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(getActivity(), "Failed to load course details", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CourseDetailsResponse> call, Throwable t) {
+                Toast.makeText(getActivity(), "Error fetching course details", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    // Display course details dynamically in the profile layout
+    private void displayCourseDetails(List<CourseDetails> courseDetailsList) {
+        if (courseDetailsList == null || courseDetailsList.isEmpty()) {
+            // Safeguard if the list is null or empty
+            Toast.makeText(getActivity(), "No course details to display", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        LinearLayout courseDetailsLayout = binding.courseDetailsLayout;
+        courseDetailsLayout.removeAllViews(); // Clear previous views
+
+        for (CourseDetails course : courseDetailsList) {
+            // Create a new TextView for each course
+            TextView courseView = new TextView(getActivity());
+            courseView.setText(String.format("%s (%s)\nDescription: %s\nYear: %s Block: %s",
+                    course.getCourseName(),
+                    course.getCourseCode(),
+                    course.getCourseDescription(),
+                    course.getYear(),
+                    course.getBlock()));
+            courseView.setPadding(16, 16, 16, 16);
+            courseView.setTextSize(16f);
+            courseView.setOnClickListener(view -> showEditCourseDialog(course));
+
+            // Add the TextView to the layout
+            courseDetailsLayout.addView(courseView);
+        }
+    }
+
+    // Show dialog to edit course details
+    private void showEditCourseDialog(CourseDetails course) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Edit Course: " + course.getCourseName());
+
+        // Inflate the dialog with a custom layout containing two EditText fields
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        View dialogView = inflater.inflate(R.layout.dialog_edit_course, null);
+        EditText courseDescriptionEditText = dialogView.findViewById(R.id.course_description_edit_text);
+        EditText schedulePasswordEditText = dialogView.findViewById(R.id.schedule_password_edit_text);
+
+        // Set initial values
+        courseDescriptionEditText.setText(course.getCourseDescription());
+        schedulePasswordEditText.setText(course.getSchedulePassword() != null ? course.getSchedulePassword() : "");
+
+        // Disable the password field if the course has no schedule
+        if (course.getYear().equals("N/A") && course.getBlock().equals("N/A")) {
+            schedulePasswordEditText.setEnabled(false);
+        }
+
+        builder.setView(dialogView);
+
+        // Set up the buttons
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String updatedDescription = courseDescriptionEditText.getText().toString().trim();
+            String updatedPassword = schedulePasswordEditText.getText().toString().trim();
+
+            // Call API to update course details
+            updateCourseDetails(course, updatedDescription, updatedPassword);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
+    }
+
+    private void updateCourseDetails(CourseDetails course, String description, String password) {
+        // Create the request body
+        CourseUpdateRequest updateRequest = new CourseUpdateRequest(
+                course.getCourseCode(),
+                description,
+                password.equals("N/A") ? null : password  // Set password to null if it's "N/A"
+        );
+
+        // Make API call to update course details
+        apiService.updateCourseDetails(updateRequest).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getActivity(), "Course updated successfully", Toast.LENGTH_SHORT).show();
+                    loadAndDisplayCourseDetails();  // Reload the courses after successful update
+                } else {
+                    Toast.makeText(getActivity(), "Failed to update course", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(getActivity(), "Failed to update course", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setUpGenderSpinner() {
