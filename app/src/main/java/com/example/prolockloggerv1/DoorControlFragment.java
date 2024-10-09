@@ -1,5 +1,7 @@
 package com.example.prolockloggerv1;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +22,7 @@ public class DoorControlFragment extends Fragment {
 
     private FragmentDoorControlBinding binding;
     private ApiService apiService;
+    private SharedPreferences sharedPreferences;
 
     @Nullable
     @Override
@@ -27,16 +30,32 @@ public class DoorControlFragment extends Fragment {
         binding = FragmentDoorControlBinding.inflate(inflater, container, false);
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
+        // Initialize SharedPreferences
+        sharedPreferences = getActivity().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+
         // Set up button listeners
-        binding.openDoorButton.setOnClickListener(v -> controlDoor("open"));
-        binding.closeDoorButton.setOnClickListener(v -> controlDoor("close"));
+        binding.openDoorButton.setOnClickListener(v -> {
+            controlDoor("open");
+            resetSessionTimerInActivity(); // Reset session timer when "Open Door" button is clicked
+        });
+
+        binding.closeDoorButton.setOnClickListener(v -> {
+            controlDoor("close");
+            resetSessionTimerInActivity(); // Reset session timer when "Close Door" button is clicked
+        });
 
         return binding.getRoot();
     }
 
     private void controlDoor(String action) {
-        // Replace with the actual email or fetch it from the appropriate source
-        String email = "bopenales@my.cspc.edu.ph";
+        // Fetch the email from SharedPreferences
+        String email = sharedPreferences.getString("user_email", null);
+
+        if (email == null) {
+            Toast.makeText(getActivity(), "No email found in preferences", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Call<DoorControlResponse> call;
 
         // Determine which API call to make based on action
@@ -62,5 +81,12 @@ public class DoorControlFragment extends Fragment {
                 Toast.makeText(getActivity(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    // Method to reset session timer in the parent activity
+    private void resetSessionTimerInActivity() {
+        if (getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).resetTimerFromFragment();
+        }
     }
 }

@@ -224,19 +224,29 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setUpGenderSpinner() {
+        // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
                 R.array.gender_array, android.R.layout.simple_spinner_item);
+
+        // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        // Apply the adapter to the spinner
         binding.genderSpinner.setAdapter(adapter);
     }
 
+
     private void setUpDateOfBirthPicker() {
+        binding.dateOfBirthEditText.setInputType(InputType.TYPE_NULL); // Disable manual input
+
+        // Set a click listener to show the DatePickerDialog
         binding.dateOfBirthEditText.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
             int year = calendar.get(Calendar.YEAR);
             int month = calendar.get(Calendar.MONTH);
             int day = calendar.get(Calendar.DAY_OF_MONTH);
 
+            // Show the DatePickerDialog
             DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(),
                     (view, year1, month1, dayOfMonth) -> {
                         Calendar selectedDate = Calendar.getInstance();
@@ -247,6 +257,7 @@ public class ProfileFragment extends Fragment {
             datePickerDialog.show();
         });
     }
+
 
     private void showUserProfileView() {
 
@@ -289,8 +300,15 @@ public class ProfileFragment extends Fragment {
 
         loadUserDetailsIntoForm();
 
+        // Set up the Gender Spinner
+        setUpGenderSpinner();
+
+        // Set up the DatePicker for the Date of Birth field
+        setUpDateOfBirthPicker();
+
         binding.saveButton.setOnClickListener(view -> saveUserDetails());
     }
+
 
     private void loadUserDetailsIntoProfile() {
         binding.userNameTextView.setText(String.format("%s %s",
@@ -313,33 +331,21 @@ public class ProfileFragment extends Fragment {
                 if (response.isSuccessful()) {
                     UserDetailsResponse userDetails = response.body();
                     if (userDetails != null) {
-                        try {
-                            // Updated date format to match API response
-                            SimpleDateFormat apiDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                            SimpleDateFormat displayDateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-
-                            // Parse the date and display it
-                            Calendar calendar = Calendar.getInstance();
-                            calendar.setTime(apiDateFormat.parse(userDetails.getDate_of_birth()));
-                            String formattedDate = displayDateFormat.format(calendar.getTime());
-
-                            binding.dateOfBirthEditText.setText(formattedDate);
-                        } catch (Exception e) {
-                            // If there's an issue with parsing the date, set a default message or handle it gracefully
-                            e.printStackTrace();
-                            binding.dateOfBirthEditText.setText("Enter date");
-                        }
-
-                        // Other user details loading
+                        // Load user details into the form
                         binding.firstNameEditText.setText(userDetails.getFirst_name());
                         binding.middleNameEditText.setText(userDetails.getMiddle_name());
                         binding.lastNameEditText.setText(userDetails.getLast_name());
                         binding.suffixEditText.setText(userDetails.getSuffix());
 
+                        // Load gender into the spinner
+                        String gender = userDetails.getGender(); // Ensure this is the correct gender field from the API
                         ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) binding.genderSpinner.getAdapter();
+
                         if (adapter != null) {
-                            int position = adapter.getPosition(userDetails.getGender());
-                            binding.genderSpinner.setSelection(position >= 0 ? position : 0);
+                            int position = adapter.getPosition(gender); // Get the position of the gender in the array
+                            if (position >= 0) {
+                                binding.genderSpinner.setSelection(position);
+                            }
                         }
 
                         binding.contactNumberEditText.setText(userDetails.getContact_number());
@@ -348,6 +354,7 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(getActivity(), "User details not found", Toast.LENGTH_SHORT).show();
                     }
                 } else {
+                    // Handle error case
                     String errorMessage = "Error: " + response.code();
                     try {
                         if (response.errorBody() != null) {
@@ -363,10 +370,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onFailure(Call<UserDetailsResponse> call, Throwable t) {
-                String errorMessage = "Failed to connect to the server";
-                if (t != null) {
-                    errorMessage += ": " + t.getMessage();
-                }
+                String errorMessage = "Failed to connect to the server: " + t.getMessage();
                 Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_LONG).show();
                 Log.e("ProfileFragment", errorMessage, t);
             }
@@ -376,15 +380,16 @@ public class ProfileFragment extends Fragment {
 
 
 
+
     private void saveUserDetails() {
-        String firstName = binding.firstNameEditText.getText().toString().trim();
-        String middleName = binding.middleNameEditText.getText().toString().trim();
-        String lastName = binding.lastNameEditText.getText().toString().trim();
-        String suffix = binding.suffixEditText.getText().toString().trim();
-        String dateOfBirth = binding.dateOfBirthEditText.getText().toString().trim();
-        String gender = binding.genderSpinner.getSelectedItem().toString();
-        String contactNumber = binding.contactNumberEditText.getText().toString().trim();
-        String completeAddress = binding.completeAddressEditText.getText().toString().trim();
+        String firstName = binding.firstNameEditText.getText() != null ? binding.firstNameEditText.getText().toString().trim() : "";
+        String middleName = binding.middleNameEditText.getText() != null ? binding.middleNameEditText.getText().toString().trim() : "";
+        String lastName = binding.lastNameEditText.getText() != null ? binding.lastNameEditText.getText().toString().trim() : "";
+        String suffix = binding.suffixEditText.getText() != null ? binding.suffixEditText.getText().toString().trim() : "";
+        String dateOfBirth = binding.dateOfBirthEditText.getText() != null ? binding.dateOfBirthEditText.getText().toString().trim() : "";
+        String gender = binding.genderSpinner.getSelectedItem() != null ? binding.genderSpinner.getSelectedItem().toString() : "";
+        String contactNumber = binding.contactNumberEditText.getText() != null ? binding.contactNumberEditText.getText().toString().trim() : "";
+        String completeAddress = binding.completeAddressEditText.getText() != null ? binding.completeAddressEditText.getText().toString().trim() : "";
 
         // Validate first name
         if (firstName.isEmpty() || !firstName.matches("^[a-zA-Z]+$")) {
@@ -411,7 +416,7 @@ public class ProfileFragment extends Fragment {
         }
 
         // Validate date of birth
-        if (dateOfBirth.isEmpty()) {
+        if (dateOfBirth.isEmpty() || dateOfBirth.equalsIgnoreCase("Enter date")) {
             Toast.makeText(getActivity(), "Date of birth is required", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -505,6 +510,8 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+
+
     private boolean isValidGender(String gender) {
         // Define valid gender options or check against a predefined list
         String[] validGenders = getResources().getStringArray(R.array.gender_array);
@@ -574,17 +581,29 @@ public class ProfileFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Enroll in " + schedule.getCourseName());
 
-        final EditText passwordInput = new EditText(getActivity());
-        passwordInput.setHint("Enter password");
-        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        // Inflate custom dialog layout
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        View dialogView = inflater.inflate(R.layout.dialog_password_input, null);
+        builder.setView(dialogView);
 
-        builder.setView(passwordInput);
+        // Find views in custom layout
+        EditText passwordInput = dialogView.findViewById(R.id.password_input);
+        ImageView togglePasswordVisibility = dialogView.findViewById(R.id.toggle_password_visibility);
+
+        // Add functionality to toggle password visibility
+        togglePasswordVisibility.setOnClickListener(v -> {
+            if (passwordInput.getInputType() == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
+                passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                togglePasswordVisibility.setImageResource(R.drawable.baseline_remove_red_eye_24);  // Switch to "show" icon
+            } else {
+                passwordInput.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                togglePasswordVisibility.setImageResource(R.drawable.baseline_remove_red_eye_24);  // Switch to "hide" icon
+            }
+            passwordInput.setSelection(passwordInput.getText().length());  // Move cursor to the end
+        });
 
         builder.setPositiveButton("Enroll", (dialog, which) -> {
             String enteredPassword = passwordInput.getText().toString().trim();
-
-            // Check if the user is a student (role_number == 3)
-
 
             // Check if the entered password matches the course password
             if (!enteredPassword.equals(schedule.getPassword())) {
@@ -601,12 +620,17 @@ public class ProfileFragment extends Fragment {
         builder.create().show();
     }
 
+
+    // Enroll in a course using API call
     // Enroll in a course using API call
     private void enrollInCourse(LabSchedule schedule) {
         String userEmail = sharedPreferences.getString("user_email", "");
 
+        // Log course ID to verify correctness
+        Log.d("ProfileFragment", "Attempting to enroll in course with course_id: " + schedule.getCourseId());
+
         // Prepare the API call
-        Call<EnrollmentResponse> enrollCall = apiService.enrollStudent(userEmail, schedule.getId());
+        Call<EnrollmentResponse> enrollCall = apiService.enrollStudent(userEmail, schedule.getCourseId()); // Use course ID
 
         enrollCall.enqueue(new Callback<EnrollmentResponse>() {
             @Override
@@ -636,5 +660,8 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
+
+
 }
 

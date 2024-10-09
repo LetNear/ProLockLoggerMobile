@@ -49,7 +49,7 @@ public interface ApiService {
     Call<List<LabSchedule>> getLabSchedules();
 
     @POST("enroll-student")
-    Call<EnrollmentResponse> enrollStudent(@Query("email") String email, @Query("course_id") int courseId);
+    Call<EnrollmentResponse> enrollStudent(@Query("email") String email, @Query("course_id") int labScheduleId);
 
     @GET("alternative-student-schedule/{email}")
     Call<List<Schedule>> getAlternativeSchedulesByEmail(@Path("email") String email);

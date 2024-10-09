@@ -246,20 +246,28 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void displayPage(int page) {
-        // Clear existing rows (except the header row)
-        tableLayout.removeViews(1, tableLayout.getChildCount() - 1);
+        if (!isAdded() || getActivity() == null) {
+            Log.e("ScheduleFragment", "Fragment not attached to an activity.");
+            return; // Don't proceed if the fragment is not attached
+        }
 
         // Get role number from shared preferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getActivity().MODE_PRIVATE);
         int roleNumber = sharedPreferences.getInt("role_number", 2);
 
+        // Clear existing rows (except the header row)
+        int childCount = tableLayout.getChildCount();
+        if (childCount > 1) {
+            tableLayout.removeViews(1, childCount - 1); // Safely remove all rows except header
+        }
+
         // Check if there are schedules to display
         if (filteredSchedules.isEmpty()) {
             // Display no schedules message
-            TableRow row = new TableRow(requireContext());
-            TextView noDataTextView = new TextView(requireContext());
+            TableRow row = new TableRow(getActivity());
+            TextView noDataTextView = new TextView(getActivity());
             noDataTextView.setText("No schedules yet!");
-            noDataTextView.setGravity(View.TEXT_ALIGNMENT_CENTER);
+            noDataTextView.setGravity(Gravity.CENTER); // Adjusted to Gravity.CENTER for proper centering
             noDataTextView.setPadding(12, 12, 12, 12); // Add padding
             row.addView(noDataTextView);
             tableLayout.addView(row);
@@ -273,13 +281,13 @@ public class ScheduleFragment extends Fragment {
                 Schedule schedule = filteredSchedules.get(i);
 
                 // Adding a dynamic row in your Java code for each schedule item
-                TableRow row = new TableRow(requireContext());
+                TableRow row = new TableRow(getActivity());
                 row.setLayoutParams(new TableRow.LayoutParams(
                         TableRow.LayoutParams.MATCH_PARENT,
                         TableRow.LayoutParams.WRAP_CONTENT));
 
                 // Course Code
-                TextView courseCodeView = new TextView(requireContext());
+                TextView courseCodeView = new TextView(getActivity());
                 courseCodeView.setText(schedule.getCourseCode());
                 courseCodeView.setPadding(12, 12, 12, 12); // Padding
                 courseCodeView.setGravity(Gravity.CENTER); // Center the text
@@ -287,7 +295,7 @@ public class ScheduleFragment extends Fragment {
                 row.addView(courseCodeView);
 
                 // Course Name
-                TextView courseNameView = new TextView(requireContext());
+                TextView courseNameView = new TextView(getActivity());
                 courseNameView.setText(schedule.getCourseName());
                 courseNameView.setPadding(12, 12, 12, 12); // Padding
                 courseNameView.setGravity(Gravity.CENTER); // Center the text
@@ -295,7 +303,7 @@ public class ScheduleFragment extends Fragment {
                 row.addView(courseNameView);
 
                 // Time and Day
-                TextView timeAndDayView = new TextView(requireContext());
+                TextView timeAndDayView = new TextView(getActivity());
                 timeAndDayView.setText(schedule.getDayOfTheWeek() + "\n" + schedule.getClassStart() + " - " + schedule.getClassEnd());
                 timeAndDayView.setPadding(12, 12, 12, 12); // Padding
                 timeAndDayView.setGravity(Gravity.CENTER); // Center the text
@@ -304,7 +312,7 @@ public class ScheduleFragment extends Fragment {
 
                 // Conditionally add Block column only for role_number == 2
                 if (roleNumber == 2) {
-                    TextView blockView = new TextView(requireContext());
+                    TextView blockView = new TextView(getActivity());
                     blockView.setText(schedule.getBlockYear());
                     blockView.setPadding(12, 12, 12, 12); // Padding
                     blockView.setGravity(Gravity.CENTER); // Center the text
@@ -324,6 +332,7 @@ public class ScheduleFragment extends Fragment {
             pageIndicator.setText(String.format("Page %d", currentPage + 1));
         }
     }
+
 
 
 

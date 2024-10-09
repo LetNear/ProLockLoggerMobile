@@ -34,6 +34,7 @@ public class HomeFragment extends Fragment {
         stat2Value = view.findViewById(R.id.stat2Value);
         welcomeText = view.findViewById(R.id.welcomeText);
 
+
         // Fetch the user data from SharedPreferences
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_session", getContext().MODE_PRIVATE);
         String userName = sharedPreferences.getString("user_name", "");
@@ -104,19 +105,31 @@ public class HomeFragment extends Fragment {
             stat2Value.setVisibility(View.GONE);
         }
 
+        // Reset session timer when the fragment loads or user interacts with "Get Started" button
+        if (getStartedButton != null) {
+            getStartedButton.setOnClickListener(v -> {
+                // Add your get started logic here
+                resetSessionTimerInActivity();  // Reset the session timer
+            });
+        }
+
+        // Reset session timer on fragment load
+        resetSessionTimerInActivity();
+
         return view;
     }
-
 
     private void fetchStudentCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         Call<StudentCountResponse> call = apiService.getStudentCountByEmail(email);
 
+        // Reset session timer when fetching student count
+        resetSessionTimerInActivity();
+
         call.enqueue(new Callback<StudentCountResponse>() {
             @Override
             public void onResponse(Call<StudentCountResponse> call, Response<StudentCountResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Ensure you are using the correct method to get the student count
                     stat1Value.setText(String.valueOf(response.body().getStudentCount()));
                 } else {
                     Toast.makeText(getContext(), "Failed to fetch student count", Toast.LENGTH_SHORT).show();
@@ -131,10 +144,12 @@ public class HomeFragment extends Fragment {
         });
     }
 
-
     private void fetchScheduleCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         Call<ScheduleCountResponse> call = apiService.getScheduleCountByEmail(email);
+
+        // Reset session timer when fetching schedule count
+        resetSessionTimerInActivity();
 
         call.enqueue(new Callback<ScheduleCountResponse>() {
             @Override
@@ -142,7 +157,6 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     ScheduleCountResponse scheduleResponse = response.body();
 
-                    // Ensure the schedule count is not null
                     if (scheduleResponse.getScheduleCount() != null) {
                         stat2Value.setText(String.valueOf(scheduleResponse.getScheduleCount()));
                         Log.i("HomeFragment", "Instructor: " + scheduleResponse.getInstructor() +
@@ -165,10 +179,12 @@ public class HomeFragment extends Fragment {
         });
     }
 
-
     private void fetchStudentScheduleCount(String email) {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         Call<StudentScheduleCountResponse> call = apiService.getStudentScheduleCount(email);
+
+        // Reset session timer when fetching student schedule count
+        resetSessionTimerInActivity();
 
         call.enqueue(new Callback<StudentScheduleCountResponse>() {
             @Override
@@ -192,6 +208,9 @@ public class HomeFragment extends Fragment {
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         Call<LogCountResponse> call = apiService.getTotalLogsCount(email);
 
+        // Reset session timer when fetching log count
+        resetSessionTimerInActivity();
+
         call.enqueue(new Callback<LogCountResponse>() {
             @Override
             public void onResponse(Call<LogCountResponse> call, Response<LogCountResponse> response) {
@@ -208,5 +227,12 @@ public class HomeFragment extends Fragment {
                 Toast.makeText(getContext(), "Failed to connect to the server", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    // Method to reset session timer in the parent activity
+    private void resetSessionTimerInActivity() {
+        if (getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).resetTimerFromFragment();
+        }
     }
 }

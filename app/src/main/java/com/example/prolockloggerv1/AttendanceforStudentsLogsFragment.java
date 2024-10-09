@@ -70,11 +70,13 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
         // Start refreshing data at 3-second intervals
         handler.post(refreshRunnable);
 
+        // Reset the session timer on button clicks
         nextPageButton.setOnClickListener(v -> {
             if (currentPage < getMaxPage()) {
                 currentPage++;
                 displayPage(currentPage);
             }
+            resetSessionTimerInActivity(); // Reset session timer on button click
         });
 
         previousPageButton.setOnClickListener(v -> {
@@ -82,6 +84,7 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
                 currentPage--;
                 displayPage(currentPage);
             }
+            resetSessionTimerInActivity(); // Reset session timer on button click
         });
 
         return rootView;
@@ -198,5 +201,12 @@ public class AttendanceforStudentsLogsFragment extends Fragment {
 
     private int getMaxPage() {
         return (int) Math.ceil((double) filteredLogs.size() / pageSize) - 1;
+    }
+
+    // Method to reset session timer in the parent activity
+    private void resetSessionTimerInActivity() {
+        if (getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).resetTimerFromFragment();
+        }
     }
 }

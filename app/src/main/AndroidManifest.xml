@@ -29,12 +29,7 @@
             android:exported="true" />
 
         <!-- LandingActivity Declaration -->
-        <activity
-            android:name=".LandingActivity"
-            android:exported="true" />
 
-        <!-- ScheduleActivity Declaration -->
-        <activity android:name=".ScheduleActivity" />
 
     </application>
 
